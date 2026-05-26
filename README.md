@@ -7,6 +7,20 @@
 
 ---
 
+## 📸 Vista del Proyecto (UI Showcase)
+
+<div align="center">
+  <h3>✍️ Registro de Asiento Contable Diario (Hito 2 - Reactivo con Signals)</h3>
+  <img src="docs/images/aequivault_journal_entry.png" alt="Registro de Asiento Diario" width="750" style="border-radius: 12px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1);" />
+  
+  <br/><br/>
+  
+  <h3>📊 Plan de Cuentas Jerárquico - COA (Hito 3 - Postgres LTREE y Árbol Recursivo)</h3>
+  <img src="docs/images/aequivault_chart_of_accounts.png" alt="Plan de Cuentas Jerárquico" width="750" style="border-radius: 12px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1);" />
+</div>
+
+---
+
 ## 📖 Visión General
 **AequiVault** es un motor de libro mayor API-first, liviano, transaccional y multi-inquilino. Diseñado como el *"Stripe para la Contabilidad"*, resuelve el problema de integrar lógica financiera B2B compleja en plataformas SaaS sin depender de monolitos ERP tradicionales. 
 
