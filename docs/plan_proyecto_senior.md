@@ -101,32 +101,32 @@ Para demostrar nivel senior, separaremos estrictamente las capas del backend par
 
 ```mermaid
 graph TD
-    subgraph Infrastructure Layer (Adapters)
+    subgraph infra ["Infrastructure Layer (Adapters)"]
         WebController[REST Controllers]
         JpaRepo[Spring Data JPA Repositories]
         QueueAdapter[Event Listeners / MQ]
     end
 
-    subgraph Application Layer (Use Cases)
+    subgraph app ["Application Layer (Use Cases)"]
         PostEntryUC[PostJournalEntryUseCase]
         GetTrialBalUC[GetTrialBalanceUseCase]
         ReconcileUC[ReconcileBankTransactionUseCase]
     end
 
-    subgraph Core Domain Layer (Pure Java)
-        subgraph Entities
+    subgraph domain ["Core Domain Layer (Pure Java)"]
+        subgraph entities ["Entities"]
             JournalEntry[JournalEntry Aggregate]
             LedgerAccount[LedgerAccount]
             AccountGroup[AccountGroup]
         end
-        subgraph Value Objects
+        subgraph value_objects ["Value Objects"]
             Money[Money Value Object]
             AccountCode[AccountCode]
         end
-        subgraph Domain Services
+        subgraph domain_services ["Domain Services"]
             DoubleEntryService[DoubleEntryValidationService]
         end
-        subgraph Ports
+        subgraph ports ["Ports"]
             InboundPorts[Use Case Interfaces]
             OutboundPorts[Repository Interfaces]
         end
