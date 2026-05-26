@@ -1,0 +1,29 @@
+# System files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Compilation & dependency directories
+aequivault/backend/target/
+aequivault/frontend/node_modules/
+aequivault/frontend/dist/
+aequivault/frontend/tmp/
+aequivault/frontend/out-tsc/
+aequivault/frontend/.angular/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local configuration / secrets
+.env
+.env.local
+.env.*.local
