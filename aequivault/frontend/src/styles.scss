@@ -45,7 +45,9 @@ body {
   background-attachment: fixed;
   color: var(--text-primary);
   min-height: 100vh;
-  padding: 2rem 1.5rem;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
 }
 
 /* Custom Scrollbar */

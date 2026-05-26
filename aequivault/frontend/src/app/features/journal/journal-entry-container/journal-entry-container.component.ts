@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { JournalEntryStateService } from '../../../core/services/journal-entry-state.service';
@@ -23,9 +23,10 @@ import { CoaManagerComponent } from '../coa-manager/coa-manager.component';
     CoaManagerComponent
   ],
   template: `
-    <div class="glass-panel main-header">
-      <div class="header-left">
-        <div class="brand-container">
+    <div class="app-layout">
+      <!-- Left Sidebar Navigation -->
+      <aside class="sidebar">
+        <div class="sidebar-brand">
           <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -35,261 +36,731 @@ import { CoaManagerComponent } from '../coa-manager/coa-manager.component';
               </linearGradient>
             </defs>
             <path d="M50 15 L18 85 H36 L50 50 L64 85 H82 Z" fill="url(#logo-grad)" />
-            <path d="M50 50 L40 72 H60 Z" fill="#0f172a" opacity="0.9" />
+            <path d="M50 50 L40 72 H60 Z" fill="#0b0f19" opacity="0.9" />
             <circle cx="50" cy="50" r="3" fill="#34d399" />
           </svg>
-          <div class="brand-text">
-            <span class="badge badge-success">Hito 3 Active</span>
-            <h1>AequiVault</h1>
+          <h1 class="brand-name">AequiVault</h1>
+        </div>
+
+        <nav class="sidebar-menu">
+          <button type="button" class="menu-btn" [class.active]="false" disabled>
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            Dashboard
+          </button>
+          
+          <button type="button" class="menu-btn" [class.active]="false" disabled>
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+            Ledger
+          </button>
+
+          <button 
+            type="button" 
+            class="menu-btn" 
+            [class.active]="activeTab() === 'entry'"
+            (click)="activeTab.set('entry')">
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            Journals
+          </button>
+
+          <button 
+            type="button" 
+            class="menu-btn" 
+            [class.active]="activeTab() === 'coa'"
+            (click)="activeTab.set('coa')">
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+            Chart of Accounts
+          </button>
+
+          <button type="button" class="menu-btn" [class.active]="false" disabled>
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10"></line>
+              <line x1="12" y1="20" x2="12" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            Reports
+          </button>
+
+          <button type="button" class="menu-btn" [class.active]="false" disabled>
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Settings
+          </button>
+        </nav>
+      </aside>
+
+      <!-- Right Main Workspace Panel -->
+      <main class="main-content">
+        <header class="top-header">
+          <div class="header-title-section">
+            <h2 class="page-title">New Journal Entry</h2>
+            <span class="entry-sublabel">{{ state.entryNumber() || 'JE-2024-03-15' }}</span>
+          </div>
+
+          <div class="header-actions">
+            <!-- Notification Bell Icon with Badge -->
+            <button type="button" class="notification-btn">
+              <svg class="bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <span class="notification-badge"></span>
+            </button>
+
+            <!-- User Profile drop info -->
+            <div class="user-profile">
+              <div class="avatar-container">
+                <svg class="avatar-svg" viewBox="0 0 32 32">
+                  <defs>
+                    <linearGradient id="avatar-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#a78bfa" />
+                      <stop offset="100%" stop-color="#3b82f6" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="16" cy="16" r="16" fill="url(#avatar-grad)" />
+                  <path d="M16 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm-8 16c0-4.4 3.6-8 8-8s8 3.6 8 8v1h-16v-1z" fill="#ffffff" opacity="0.95"/>
+                </svg>
+              </div>
+              <div class="user-info">
+                <span class="user-name">Alex R.</span>
+                <span class="user-org">AequiVault</span>
+              </div>
+              <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </div>
+        </header>
+
+        <!-- Glowing Tenant context selector row -->
+        <div class="tenant-section">
+          <div class="tenant-dropdown-container">
+            <select class="tenant-select" [ngModel]="activeTenantId()" (ngModelChange)="onTenantChange($event)">
+              <option value="212f7927-ed0d-495c-b39b-94364d5e2f9b">Tenant A: Corporación Alpha</option>
+              <option value="5ace6e00-1995-4012-a708-c8d45f6f4ff8">Tenant B: Consultora Omega</option>
+            </select>
+            <span class="tenant-arrow">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </span>
           </div>
         </div>
-        <p class="subtitle">Bóveda Financiera Transaccional Multi-Inquilino con RLS</p>
-      </div>
-      
-      <div class="tenant-selector">
-        <label for="tenant">Inquilino Activo (Tenant Context)</label>
-        <select id="tenant" [ngModel]="activeTenantId()" (ngModelChange)="onTenantChange($event)">
-          <option value="212f7927-ed0d-495c-b39b-94364d5e2f9b">Tenant A: Corporación Alpha</option>
-          <option value="5ace6e00-1995-4012-a708-c8d45f6f4ff8">Tenant B: Consultora Omega</option>
-        </select>
-        <span class="rls-shield">🛡️ RLS Activo</span>
-      </div>
-    </div>
 
-    <!-- Notification Area -->
-    @if (notification(); as notif) {
-      <div class="notification-banner" [ngClass]="notif.type === 'success' ? 'notif-success' : 'notif-error'">
-        <div class="notif-header">
-          <strong>{{ notif.title }}</strong>
-          <button (click)="clearNotification()" class="btn-close-notif">✕</button>
-        </div>
-        <p class="notif-detail">{{ notif.detail }}</p>
-        @if (notif.errors) {
-          <ul class="notif-errors-list">
-            @for (err of notif.errors; track err) {
-              <li>• {{ err }}</li>
+        <!-- Notification Banner -->
+        @if (notification(); as notif) {
+          <div class="notification-banner" [ngClass]="notif.type === 'success' ? 'notif-success' : 'notif-error'">
+            <div class="notif-header">
+              <strong>{{ notif.title }}</strong>
+              <button (click)="clearNotification()" class="btn-close-notif">✕</button>
+            </div>
+            <p class="notif-detail">{{ notif.detail }}</p>
+            @if (notif.errors) {
+              <ul class="notif-errors-list">
+                @for (err of notif.errors; track err) {
+                  <li>• {{ err }}</li>
+                }
+              </ul>
             }
-          </ul>
+          </div>
         }
-      </div>
-    }
 
-    <!-- Navigation Tabs Bar -->
-    <div class="tabs-bar">
-      <button 
-        type="button" 
-        class="tab-btn" 
-        [class.active-tab]="activeTab() === 'entry'"
-        (click)="activeTab.set('entry')">
-        ✍️ Registro de Asiento
-      </button>
-      <button 
-        type="button" 
-        class="tab-btn" 
-        [class.active-tab]="activeTab() === 'coa'"
-        (click)="activeTab.set('coa')">
-        📊 Plan de Cuentas (COA)
-      </button>
-    </div>
+        <!-- Workspace content -->
+        <div class="workspace-content">
+          @if (activeTab() === 'entry') {
+            <div class="entry-workspace animate-workspace">
+              <!-- Collapsible Options Panel for Form Details (keeps standard Angular inputs testable) -->
+              <details class="metadata-details">
+                <summary class="metadata-summary">
+                  <span>🛠️ Entry Options & Metadata (State, Currency, Asiento)</span>
+                </summary>
+                <div class="metadata-content">
+                  <app-journal-entry-form
+                    [date]="state.date()"
+                    [description]="state.description()"
+                    [entryNumber]="state.entryNumber()"
+                    [status]="state.status()"
+                    [currency]="state.currency()"
+                    (dateChange)="state.date.set($event)"
+                    (descriptionChange)="state.description.set($event)"
+                    (entryNumberChange)="state.entryNumber.set($event)"
+                    (statusChange)="state.status.set($event)"
+                    (currencyChange)="state.currency.set($event)">
+                    
+                    <div style="display:none;"></div>
+                  </app-journal-entry-form>
+                </div>
+              </details>
 
-    <!-- Workspaces -->
-    @if (activeTab() === 'entry') {
-      <div class="glass-panel animate-workspace">
-        <h2>Registro de Asiento Diario</h2>
-        
-        <app-journal-entry-form
-          [date]="state.date()"
-          [description]="state.description()"
-          [entryNumber]="state.entryNumber()"
-          [status]="state.status()"
-          [currency]="state.currency()"
-          (dateChange)="state.date.set($event)"
-          (descriptionChange)="state.description.set($event)"
-          (entryNumberChange)="state.entryNumber.set($event)"
-          (statusChange)="state.status.set($event)"
-          (currencyChange)="state.currency.set($event)">
+              <!-- Central Premium Glass Card -->
+              <div class="journal-card glass-panel">
+                <div class="card-header">
+                  <span class="date-label">Transaction Date</span>
+                  <div class="date-picker-wrapper">
+                    <span class="formatted-date">{{ displayDate() }}</span>
+                    <input 
+                      type="date" 
+                      class="date-native-input"
+                      [ngModel]="state.date()"
+                      (ngModelChange)="state.date.set($event)" />
+                  </div>
+                </div>
 
-          <app-journal-line-table
-            [lines]="state.lines()"
-            [accounts]="accounts()"
-            (addLine)="state.addLine()"
-            (removeLine)="state.removeLine($event)"
-            (updateLine)="state.updateLine($event.id, $event.field, $event.value)">
-          </app-journal-line-table>
+                <!-- Concept/Description text area or input field styled elegantly -->
+                <div class="concept-input-container">
+                  <input 
+                    type="text" 
+                    class="concept-input" 
+                    placeholder="Entry Concept (Description)..."
+                    [ngModel]="state.description()" 
+                    (ngModelChange)="state.description.set($event)" />
+                </div>
 
-          <app-journal-entry-summary
-            [debitSum]="state.debitSum()"
-            [creditSum]="state.creditSum()"
-            [difference]="state.difference()"
-            [isBalanced]="state.isBalanced()"
-            [currency]="state.currency()">
-          </app-journal-entry-summary>
+                <!-- Core Ledger Lines Table component -->
+                <app-journal-line-table
+                  [lines]="state.lines()"
+                  [accounts]="accounts()"
+                  [description]="state.description()"
+                  (addLine)="state.addLine()"
+                  (removeLine)="state.removeLine($event)"
+                  (updateLine)="state.updateLine($event.id, $event.field, $event.value)">
+                </app-journal-line-table>
 
-        </app-journal-entry-form>
+                <!-- Totals & Status indicators footer inside the Card -->
+                <div class="card-footer">
+                  <div class="summary-line">
+                    <span class="totals-label">Totals</span>
+                    <div class="totals-values">
+                      <span class="total-val debit-total">{{ state.debitSum() | currency: state.currency() }}</span>
+                      <span class="total-val credit-total">{{ state.creditSum() | currency: state.currency() }}</span>
+                    </div>
+                  </div>
 
-        <div class="submit-bar">
-          <button 
-            type="button" 
-            (click)="resetForm()" 
-            class="btn btn-secondary">
-            Resetear
-          </button>
-          <button 
-            type="button" 
-            [disabled]="!state.canSubmit() || isLoading()" 
-            (click)="submitEntry()" 
-            class="btn btn-primary">
-            @if (isLoading()) {
-              Procesando...
-            } @else {
-              Asentar Asiento Contable
-            }
-          </button>
+                  <div class="status-pill-container">
+                    <div class="status-pill" [class.balanced]="state.isBalanced()">
+                      <span class="status-icon">
+                        @if (state.isBalanced()) {
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        } @else {
+                          ⚠️
+                        }
+                      </span>
+                      <span class="status-text">
+                        Status: {{ state.isBalanced() ? 'Balanced' : 'Unbalanced' }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Main Submission and Reset Buttons -->
+              <div class="submit-bar">
+                <button 
+                  type="button" 
+                  (click)="resetForm()" 
+                  class="btn btn-secondary">
+                  Reset Form
+                </button>
+                <button 
+                  type="button" 
+                  [disabled]="!state.canSubmit() || isLoading()" 
+                  (click)="submitEntry()" 
+                  class="btn btn-primary">
+                  @if (isLoading()) {
+                    Processing...
+                  } @else {
+                    Post Journal Entry
+                  }
+                </button>
+              </div>
+            </div>
+          }
+
+          @if (activeTab() === 'coa') {
+            <div class="coa-workspace animate-workspace">
+              <app-coa-manager 
+                [tenantId]="activeTenantId()" 
+                (catalogChanged)="fetchAccounts()">
+              </app-coa-manager>
+            </div>
+          }
         </div>
-      </div>
-    }
-
-    @if (activeTab() === 'coa') {
-      <div class="animate-workspace">
-        <app-coa-manager 
-          [tenantId]="activeTenantId()" 
-          (catalogChanged)="fetchAccounts()">
-        </app-coa-manager>
-      </div>
-    }
+      </main>
+    </div>
   `,
   styles: [`
-    .main-header {
+    .app-layout {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1.5rem;
-      border-bottom: 2px solid rgba(99, 102, 241, 0.2);
+      width: 100vw;
+      height: 100vh;
+      background-color: #0b0f19;
+      overflow: hidden;
+      font-family: var(--font-family);
     }
-    .brand-container {
+
+    /* Left Sidebar */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      width: 260px;
+      flex-shrink: 0;
+      background: #090c15;
+      border-right: 1.5px solid rgba(255, 255, 255, 0.05);
+      padding: 2rem 0.75rem;
+    }
+    .sidebar-brand {
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      margin-bottom: 0.25rem;
+      padding: 0.5rem 1.25rem;
+      margin-bottom: 3rem;
     }
     .logo-icon {
-      width: 42px;
-      height: 42px;
+      width: 32px;
+      height: 32px;
       filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.4));
     }
-    .brand-text {
-      display: flex;
-      flex-direction: column-reverse;
-      align-items: flex-start;
-      gap: 0.15rem;
-    }
-    .brand-text h1 {
-      margin: 0;
-      font-size: 2.25rem;
-      background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 70%, #34d399 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: -0.02em;
-    }
-    .subtitle {
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-    }
-    .tenant-selector {
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid var(--border-glass);
-      padding: 1rem;
-      border-radius: var(--radius-md);
-      min-width: 320px;
-    }
-    .tenant-selector label {
-      margin-bottom: 0.25rem;
-      font-size: 0.8rem;
-    }
-    .tenant-selector select {
-      padding: 0.5rem;
-      font-size: 0.9rem;
-      margin-bottom: 0.5rem;
-    }
-    .rls-shield {
-      display: block;
-      font-size: 0.75rem;
-      color: #34d399;
+    h1.brand-name {
+      color: #ffffff;
+      font-size: 1.25rem;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      text-align: right;
+      letter-spacing: -0.01em;
+      background: none;
+      -webkit-text-fill-color: initial;
+      margin: 0;
     }
-    .tabs-bar {
+    .sidebar-menu {
       display: flex;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-      border-bottom: 1px solid var(--border-glass);
-      padding-bottom: 0.5rem;
+      flex-direction: column;
+      gap: 0.5rem;
     }
-    .tab-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-secondary);
-      font-size: 1rem;
-      font-weight: 500;
-      padding: 0.5rem 1.25rem;
-      cursor: pointer;
-      border-radius: var(--radius-sm);
-      transition: var(--transition-smooth);
+    .menu-btn {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      border: 1px solid transparent;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      border: 1.5px solid transparent;
+      background: transparent;
+      color: #64748b;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      text-align: left;
+      width: 100%;
     }
-    .tab-btn:hover {
+    .menu-btn:hover {
       background: rgba(255, 255, 255, 0.03);
-      color: var(--text-primary);
-      border-color: var(--border-glass);
+      color: #f8fafc;
     }
-    .active-tab {
-      background: rgba(99, 102, 241, 0.15) !important;
-      color: var(--color-primary) !important;
-      border: 1px solid rgba(99, 102, 241, 0.3) !important;
-      box-shadow: 0 0 12px rgba(99, 102, 241, 0.1);
+    .menu-btn.active {
+      background: linear-gradient(135deg, rgba(167, 139, 250, 0.12) 0%, rgba(99, 102, 241, 0.12) 100%);
+      border: 1.5px solid rgba(167, 139, 250, 0.35);
+      color: #ffffff;
+      box-shadow: 0 0 16px rgba(99, 102, 241, 0.15);
     }
-    .animate-workspace {
-      animation: slideUp 0.3s ease-out;
+    .menu-icon {
+      width: 18px;
+      height: 18px;
+      stroke-width: 2px;
+      color: #64748b;
+      transition: color 0.2s;
     }
+    .menu-btn.active .menu-icon {
+      color: #c084fc;
+    }
+    .menu-btn:hover .menu-icon {
+      color: #f8fafc;
+    }
+
+    /* Main Right Content Panel */
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      padding: 2.5rem 3rem;
+      overflow-y: auto;
+      min-width: 0;
+      position: relative;
+    }
+    .top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 2.5rem;
+    }
+    .header-title-section .page-title {
+      font-size: 2rem;
+      font-weight: 600;
+      color: #f8fafc;
+      margin: 0;
+      background: none;
+      -webkit-text-fill-color: initial;
+    }
+    .entry-sublabel {
+      font-size: 0.9rem;
+      color: #64748b;
+      display: block;
+      margin-top: 0.25rem;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+    .notification-btn {
+      position: relative;
+      background: transparent;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+      padding: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: var(--transition-smooth);
+    }
+    .notification-btn:hover {
+      color: #f8fafc;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .bell-icon {
+      width: 20px;
+      height: 20px;
+    }
+    .notification-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 6px;
+      height: 6px;
+      background-color: #ef4444;
+      border-radius: 50%;
+    }
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(15, 23, 42, 0.4);
+      padding: 0.4rem 0.85rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+    .user-profile:hover {
+      border-color: rgba(255, 255, 255, 0.1);
+      background: rgba(15, 23, 42, 0.6);
+    }
+    .avatar-container {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      overflow: hidden;
+    }
+    .avatar-svg {
+      width: 100%;
+      height: 100%;
+    }
+    .user-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .user-name {
+      color: #f8fafc;
+      font-size: 0.85rem;
+      font-weight: 500;
+      line-height: 1.2;
+    }
+    .user-org {
+      color: #64748b;
+      font-size: 0.75rem;
+      line-height: 1.2;
+    }
+    .chevron-icon {
+      width: 16px;
+      height: 16px;
+      color: #64748b;
+    }
+
+    /* Tenant Selector Options Row */
+    .tenant-section {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 2rem;
+    }
+    .tenant-dropdown-container {
+      position: relative;
+      width: 260px;
+    }
+    .tenant-select {
+      width: 100%;
+      padding: 0.65rem 2.5rem 0.65rem 1rem;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1.5px solid rgba(16, 185, 129, 0.4);
+      border-radius: 20px;
+      color: #e2e8f0;
+      font-size: 0.85rem;
+      font-weight: 500;
+      outline: none;
+      appearance: none;
+      cursor: pointer;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.08);
+      transition: var(--transition-smooth);
+      font-family: var(--font-family);
+    }
+    .tenant-select:focus, .tenant-select:hover {
+      border-color: #10b981;
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.15);
+    }
+    .tenant-arrow {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+    }
+    .tenant-arrow svg {
+      width: 16px;
+      height: 16px;
+      color: #10b981;
+    }
+
+    /* Core Journal Card */
+    .journal-card {
+      padding: 2.5rem;
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1.5px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-premium);
+      margin-bottom: 2rem;
+      transition: var(--transition-smooth);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 1.5rem;
+      border-bottom: 1.5px solid rgba(255, 255, 255, 0.08);
+    }
+    .date-label {
+      font-size: 1.05rem;
+      font-weight: 500;
+      color: #94a3b8;
+    }
+    .date-picker-wrapper {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 0.5rem 1.25rem;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+    .date-picker-wrapper:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      background: rgba(15, 23, 42, 0.8);
+    }
+    .formatted-date {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #ffffff;
+    }
+    .date-native-input {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    /* Concept area */
+    .concept-input-container {
+      margin-top: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1.5px solid rgba(255, 255, 255, 0.08);
+    }
+    .concept-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 1.05rem;
+      font-weight: 400;
+      outline: none;
+      padding: 0.25rem 0.5rem;
+      font-family: var(--font-family);
+    }
+    .concept-input::placeholder {
+      color: #64748b;
+    }
+
+    /* Card Footer and Totals */
+    .card-footer {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1.5px solid rgba(255, 255, 255, 0.08);
+    }
+    .summary-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .totals-label {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #ffffff;
+    }
+    .totals-values {
+      display: flex;
+      /* Align values to debit/credit inputs in table, 140px width + 40px action column spacer */
+      padding-right: 40px;
+      gap: 0;
+    }
+    .total-val {
+      font-size: 1.05rem;
+      font-weight: 600;
+      width: 140px;
+      text-align: right;
+    }
+    .debit-total {
+      color: #ffffff;
+    }
+    .credit-total {
+      color: #ffffff;
+    }
+
+    /* Status Pill (emerald color pill bottom right) */
+    .status-pill-container {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1.25rem;
+      border-radius: 24px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: var(--transition-smooth);
+    }
+    .status-pill.balanced {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1.5px solid #10b981;
+      color: #34d399;
+    }
+    .status-pill.balanced .status-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+    }
+    .status-pill.balanced .status-icon svg {
+      width: 14px;
+      height: 14px;
+      stroke-width: 3px;
+    }
+    .status-pill:not(.balanced) {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1.5px solid #ef4444;
+      color: #fca5a5;
+    }
+
+    /* Metadata details collapsible block */
+    .metadata-details {
+      margin-bottom: 1.5rem;
+      background: rgba(15, 23, 42, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: var(--transition-smooth);
+    }
+    .metadata-summary {
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #94a3b8;
+      cursor: pointer;
+      user-select: none;
+      transition: var(--transition-smooth);
+    }
+    .metadata-summary:hover {
+      background: rgba(255, 255, 255, 0.02);
+      color: #f8fafc;
+    }
+    .metadata-content {
+      padding: 1.25rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
     .submit-bar {
-      margin-top: 2rem;
+      margin-top: 1rem;
       display: flex;
       justify-content: flex-end;
       gap: 1rem;
     }
-    
-    /* Notification styling */
+
+    /* Notifications Banner */
     .notification-banner {
-      padding: 1.25rem;
-      border-radius: var(--radius-md);
-      margin-bottom: 2rem;
+      padding: 1rem 1.25rem;
+      border-radius: 10px;
+      margin-bottom: 1.5rem;
+      border-left: 4px solid;
+      font-size: 0.9rem;
       box-shadow: var(--shadow-premium);
       animation: fadeIn 0.3s ease-out;
     }
     .notif-success {
-      background-color: var(--color-success-bg);
-      border: 1px solid rgba(16, 185, 129, 0.3);
+      background-color: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-left-color: #10b981;
       color: #a7f3d0;
     }
     .notif-error {
-      background-color: var(--color-danger-bg);
-      border: 1px solid rgba(239, 68, 68, 0.3);
+      background-color: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-left-color: #ef4444;
       color: #fca5a5;
     }
     .notif-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.5rem;
-    }
-    .notif-header strong {
-      font-size: 1.05rem;
+      margin-bottom: 0.25rem;
     }
     .btn-close-notif {
       background: transparent;
@@ -299,21 +770,23 @@ import { CoaManagerComponent } from '../coa-manager/coa-manager.component';
       font-size: 1rem;
     }
     .notif-detail {
-      font-size: 0.925rem;
       line-height: 1.4;
     }
     .notif-errors-list {
       margin-top: 0.5rem;
-      padding-left: 0.5rem;
-      list-style: none;
-      font-size: 0.85rem;
+      padding-left: 1.25rem;
+      list-style-type: disc;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
+
+    .animate-workspace {
+      animation: slideUp 0.3s ease-out;
     }
     @keyframes slideUp {
       from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
       to { opacity: 1; transform: translateY(0); }
     }
   `]
@@ -324,6 +797,17 @@ export class JournalEntryContainerComponent implements OnInit {
   accounts = signal<LedgerAccountDto[]>([]);
   isLoading = signal<boolean>(false);
   activeTab = signal<'entry' | 'coa'>('entry');
+  
+  displayDate = computed(() => {
+    const rawDate = this.state.date();
+    if (!rawDate) return '';
+    const dateObj = new Date(rawDate + 'T12:00:00'); // Prevent timezone offset issues
+    return dateObj.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  });
   
   notification = signal<{
     type: 'success' | 'error';

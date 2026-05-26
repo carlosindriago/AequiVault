@@ -13,9 +13,10 @@ import { LedgerAccountDto } from '../../../../core/models/ledger-account.model';
       <table>
         <thead>
           <tr>
-            <th>Cuenta Contable</th>
-            <th>Tipo</th>
-            <th>Monto</th>
+            <th>Account Name</th>
+            <th>Description</th>
+            <th class="amount-col">Debit ($)</th>
+            <th class="amount-col">Credit ($)</th>
             <th class="actions-col"></th>
           </tr>
         </thead>
@@ -27,34 +28,34 @@ import { LedgerAccountDto } from '../../../../core/models/ledger-account.model';
                   [ngModel]="line.ledgerAccountId" 
                   (ngModelChange)="onUpdate(line.id, 'ledgerAccountId', $event)"
                   class="select-account">
-                  <option value="" disabled selected>Seleccione una cuenta...</option>
+                  <option value="" disabled selected>Select account...</option>
                   @for (acc of accounts; track acc.id) {
-                    <option [value]="acc.id">{{ acc.code }} - {{ acc.name }}</option>
+                    <option [value]="acc.id">{{ acc.name }} ({{ acc.code }})</option>
                   }
                 </select>
               </td>
               <td>
-                <select 
-                  [ngModel]="line.type" 
-                  (ngModelChange)="onUpdate(line.id, 'type', $event)"
-                  class="select-type"
-                  [ngClass]="line.type === 'DEBIT' ? 'text-debit' : 'text-credit'">
-                  <option value="DEBIT">DEBE (DEBIT)</option>
-                  <option value="CREDIT">HABER (CREDIT)</option>
-                </select>
+                <span class="row-description">{{ description || 'Payment from Client' }}</span>
               </td>
-              <td>
-                <div class="amount-input-wrapper">
-                  <span class="currency-symbol">$</span>
-                  <input 
-                    type="number" 
-                    step="0.01" 
-                    min="0"
-                    placeholder="0.00"
-                    [ngModel]="line.amount" 
-                    (ngModelChange)="onUpdate(line.id, 'amount', $event)"
-                    class="input-amount" />
-                </div>
+              <td class="amount-col">
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  min="0"
+                  placeholder=""
+                  [ngModel]="line.type === 'DEBIT' ? line.amount : null" 
+                  (ngModelChange)="onUpdateDebit(line.id, $event)"
+                  class="input-amount text-debit" />
+              </td>
+              <td class="amount-col">
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  min="0"
+                  placeholder=""
+                  [ngModel]="line.type === 'CREDIT' ? line.amount : null" 
+                  (ngModelChange)="onUpdateCredit(line.id, $event)"
+                  class="input-amount text-credit" />
               </td>
               <td class="actions-col">
                 @if (lines.length > 2) {
@@ -62,7 +63,7 @@ import { LedgerAccountDto } from '../../../../core/models/ledger-account.model';
                     type="button" 
                     (click)="removeLine.emit(line.id)" 
                     class="btn-delete"
-                    title="Eliminar línea">
+                    title="Remove line">
                     ✕
                   </button>
                 }
@@ -72,19 +73,17 @@ import { LedgerAccountDto } from '../../../../core/models/ledger-account.model';
         </tbody>
       </table>
       <div class="actions-bar">
-        <button type="button" (click)="addLine.emit()" class="btn btn-secondary btn-sm">
-          ＋ Agregar Línea
+        <button type="button" (click)="addLine.emit()" class="btn-add-line">
+          ＋ Add Line
         </button>
       </div>
     </div>
   `,
   styles: [`
     .table-container {
+      background: transparent;
       margin-top: 1.5rem;
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      border: 1px solid var(--border-glass);
-      background: rgba(15, 23, 42, 0.4);
+      margin-bottom: 0.5rem;
     }
     table {
       width: 100%;
@@ -92,103 +91,139 @@ import { LedgerAccountDto } from '../../../../core/models/ledger-account.model';
       text-align: left;
     }
     th {
-      background: rgba(20, 27, 45, 0.8);
-      padding: 1rem;
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: var(--text-secondary);
-      border-bottom: 1px solid var(--border-glass);
+      background: transparent;
+      padding: 0.75rem 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #94a3b8;
+      border-bottom: 1.5px solid rgba(255, 255, 255, 0.08);
+      font-family: var(--font-family);
     }
     td {
-      padding: 0.75rem 1rem;
-      border-bottom: 1px solid var(--border-glass);
+      padding: 1.25rem 0.5rem;
+      border-bottom: 1.5px solid rgba(255, 255, 255, 0.08);
       vertical-align: middle;
+    }
+    .line-row {
+      transition: background-color 0.2s;
     }
     .line-row:hover {
       background: rgba(255, 255, 255, 0.02);
     }
-    .select-account, .select-type, .input-amount {
-      background-color: rgba(15, 23, 42, 0.5);
-      border: 1px solid var(--border-glass);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      padding: 0.5rem 0.75rem;
+    .select-account {
+      background: transparent;
+      border: none;
+      color: #ffffff;
       font-size: 0.95rem;
       width: 100%;
-      transition: var(--transition-smooth);
-    }
-    .select-account:focus, .select-type:focus, .input-amount:focus {
-      border-color: var(--color-primary);
       outline: none;
-      background-color: rgba(15, 23, 42, 0.8);
+      cursor: pointer;
+      padding: 0.25rem 0;
+      font-family: var(--font-family);
+      font-weight: 400;
     }
-    .text-debit {
-      color: #34d399;
-      font-weight: 500;
+    .select-account option {
+      background: #0f1322;
+      color: #ffffff;
     }
-    .text-credit {
-      color: #fb7185;
-      font-weight: 500;
-    }
-    .amount-input-wrapper {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-    .currency-symbol {
-      position: absolute;
-      left: 0.75rem;
-      color: var(--text-muted);
+    .row-description {
+      color: #94a3b8;
       font-size: 0.95rem;
-      pointer-events: none;
+      font-family: var(--font-family);
+    }
+    .amount-col {
+      width: 140px;
+      text-align: right;
+    }
+    th.amount-col {
+      text-align: right;
     }
     .input-amount {
-      padding-left: 1.75rem;
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 0.95rem;
+      text-align: right;
+      width: 100%;
+      outline: none;
+      padding: 0.25rem 0;
+      font-family: var(--font-family);
+      font-weight: 400;
+    }
+    .input-amount::-webkit-outer-spin-button,
+    .input-amount::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .input-amount {
+      -moz-appearance: textfield;
+    }
+    .text-debit {
+      color: #ffffff;
+    }
+    .text-credit {
+      color: #ffffff;
     }
     .actions-col {
-      width: 50px;
+      width: 40px;
       text-align: center;
     }
     .btn-delete {
       background: transparent;
       border: none;
-      color: var(--text-muted);
+      color: rgba(255, 255, 255, 0.3);
       cursor: pointer;
-      font-size: 1.1rem;
-      padding: 0.25rem 0.5rem;
-      border-radius: 50%;
+      font-size: 0.85rem;
       transition: var(--transition-smooth);
     }
     .btn-delete:hover {
-      color: var(--color-danger);
-      background: var(--color-danger-bg);
+      color: #ef4444;
+      transform: scale(1.1);
     }
     .actions-bar {
-      padding: 1rem;
-      background: rgba(20, 27, 45, 0.4);
-      display: flex;
-      justify-content: flex-start;
+      padding: 1rem 0.5rem;
+      background: transparent;
     }
-    .btn-sm {
-      padding: 0.5rem 1rem;
-      font-size: 0.875rem;
+    .btn-add-line {
+      background: transparent;
+      border: none;
+      color: #a78bfa;
+      font-weight: 500;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .btn-add-line:hover {
+      color: #c084fc;
+      transform: translateX(2px);
     }
   `]
 })
 export class JournalLineTableComponent {
   @Input({ required: true }) lines: JournalLineForm[] = [];
   @Input({ required: true }) accounts: LedgerAccountDto[] = [];
+  @Input() description: string = '';
 
   @Output() addLine = new EventEmitter<void>();
   @Output() removeLine = new EventEmitter<string>();
   @Output() updateLine = new EventEmitter<{ id: string; field: keyof JournalLineForm; value: any }>();
 
   onUpdate(id: string, field: keyof JournalLineForm, value: any) {
-    // Para campos numéricos, aseguremos parsear el valor a número o null
-    let processedValue = value;
-    if (field === 'amount') {
-      processedValue = value === null || value === '' ? null : Number(value);
-    }
-    this.updateLine.emit({ id, field, value: processedValue });
+    this.updateLine.emit({ id, field, value });
+  }
+
+  onUpdateDebit(id: string, value: any) {
+    const val = value === null || value === '' ? null : Number(value);
+    this.updateLine.emit({ id, field: 'type', value: 'DEBIT' });
+    this.updateLine.emit({ id, field: 'amount', value: val });
+  }
+
+  onUpdateCredit(id: string, value: any) {
+    const val = value === null || value === '' ? null : Number(value);
+    this.updateLine.emit({ id, field: 'type', value: 'CREDIT' });
+    this.updateLine.emit({ id, field: 'amount', value: val });
   }
 }

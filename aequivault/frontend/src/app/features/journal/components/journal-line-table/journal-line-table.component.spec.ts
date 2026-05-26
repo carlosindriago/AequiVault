@@ -41,7 +41,7 @@ describe('JournalLineTableComponent', () => {
 
   it('should emit addLine when clicking the add button', () => {
     spyOn(component.addLine, 'emit');
-    const addButton = fixture.debugElement.query(By.css('.btn-secondary'));
+    const addButton = fixture.debugElement.query(By.css('.btn-add-line'));
     addButton.triggerEventHandler('click', null);
     expect(component.addLine.emit).toHaveBeenCalled();
   });
@@ -70,14 +70,11 @@ describe('JournalLineTableComponent', () => {
     selects[0].triggerEventHandler('ngModelChange', '2');
     expect(component.updateLine.emit).toHaveBeenCalledWith({ id: 'l-1', field: 'ledgerAccountId', value: '2' });
 
-    // Test type select change
-    const typeSelects = fixture.debugElement.queryAll(By.css('.select-type'));
-    typeSelects[0].triggerEventHandler('ngModelChange', 'CREDIT');
-    expect(component.updateLine.emit).toHaveBeenCalledWith({ id: 'l-1', field: 'type', value: 'CREDIT' });
-
-    // Test amount input change
+    // Test debit amount input change
     const amountInputs = fixture.debugElement.queryAll(By.css('.input-amount'));
+    // Index 0 is debit input of line 1, index 1 is credit input of line 1
     amountInputs[0].triggerEventHandler('ngModelChange', '250.75');
+    expect(component.updateLine.emit).toHaveBeenCalledWith({ id: 'l-1', field: 'type', value: 'DEBIT' });
     expect(component.updateLine.emit).toHaveBeenCalledWith({ id: 'l-1', field: 'amount', value: 250.75 });
   });
 });
