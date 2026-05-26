@@ -13,7 +13,7 @@ import { CoaManagerComponent } from '../coa-manager/coa-manager.component';
 import { ReportContainerComponent } from '../report-container/report-container.component';
 import { DashboardContainerComponent } from '../dashboard-container/dashboard-container.component';
 import { TranslationStateService } from '../../../core/services/translation-state.service';
-import { TranslocoDirective } from '@jsverse/transloco';
+import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-journal-entry-container',
@@ -27,7 +27,8 @@ import { TranslocoDirective } from '@jsverse/transloco';
     CoaManagerComponent,
     ReportContainerComponent,
     DashboardContainerComponent,
-    TranslocoDirective
+    TranslocoDirective,
+    TranslocoPipe
   ],
   template: `
     <div class="app-layout">
