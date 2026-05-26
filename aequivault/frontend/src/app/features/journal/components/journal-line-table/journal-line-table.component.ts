@@ -1,22 +1,23 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslocoDirective } from '@jsverse/transloco';
 import { JournalLineForm } from '../../../../core/services/journal-entry-state.service';
 import { LedgerAccountDto } from '../../../../core/models/ledger-account.model';
 
 @Component({
   selector: 'app-journal-line-table',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslocoDirective],
   template: `
-    <div class="table-container">
+    <div class="table-container" *transloco="let t">
       <table>
         <thead>
           <tr>
-            <th>Account Name</th>
-            <th>Description</th>
-            <th class="amount-col">Debit ($)</th>
-            <th class="amount-col">Credit ($)</th>
+            <th>{{ t('journal.column_account') }}</th>
+            <th>{{ t('journal.column_description') }}</th>
+            <th class="amount-col">{{ t('journal.column_debit') }}</th>
+            <th class="amount-col">{{ t('journal.column_credit') }}</th>
             <th class="actions-col"></th>
           </tr>
         </thead>
@@ -28,14 +29,14 @@ import { LedgerAccountDto } from '../../../../core/models/ledger-account.model';
                   [ngModel]="line.ledgerAccountId" 
                   (ngModelChange)="onUpdate(line.id, 'ledgerAccountId', $event)"
                   class="select-account">
-                  <option value="" disabled selected>Select account...</option>
+                  <option value="" disabled selected>{{ t('journal.select_account') }}</option>
                   @for (acc of accounts; track acc.id) {
                     <option [value]="acc.id">{{ acc.name }} ({{ acc.code }})</option>
                   }
                 </select>
               </td>
               <td>
-                <span class="row-description">{{ description || 'Payment from Client' }}</span>
+                <span class="row-description">{{ description || t('journal.default_description') }}</span>
               </td>
               <td class="amount-col">
                 <input 
@@ -63,7 +64,7 @@ import { LedgerAccountDto } from '../../../../core/models/ledger-account.model';
                     type="button" 
                     (click)="removeLine.emit(line.id)" 
                     class="btn-delete"
-                    title="Remove line">
+                    [title]="t('journal.remove_line_tooltip')">
                     ✕
                   </button>
                 }
@@ -74,7 +75,7 @@ import { LedgerAccountDto } from '../../../../core/models/ledger-account.model';
       </table>
       <div class="actions-bar">
         <button type="button" (click)="addLine.emit()" class="btn-add-line">
-          ＋ Add Line
+          ＋ {{ t('journal.add_line') }}
         </button>
       </div>
     </div>

@@ -1,0 +1,131 @@
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "ledger": "Ledger",
+    "journals": "Journals",
+    "coa": "Chart of Accounts",
+    "reports": "Reports",
+    "settings": "Settings"
+  },
+  "header": {
+    "new_entry": "New Journal Entry",
+    "profile": "Profile",
+    "notifications": "Notifications"
+  },
+  "dashboard": {
+    "title": "Financial Indicators Dashboard",
+    "liquidity_account": "Liquidity Account",
+    "start_date": "Start Date",
+    "end_date": "End Date",
+    "refresh": "Refresh",
+    "updating": "Updating...",
+    "loading": "Calculating metrics and balances in real-time...",
+    "assets": "Total Assets",
+    "liabilities": "Total Liabilities",
+    "equity": "Net Equity",
+    "trend_title": "Liquidity Trend",
+    "trend_subtitle": "Daily cash flow (Last 30 days)",
+    "no_data": "No daily balances data available",
+    "vs_previous": "vs previous",
+    "errors": {
+      "no_assets": "No asset accounts found. Please register accounts in the Chart of Accounts to visualize metrics.",
+      "load_accounts": "Error loading the Chart of Accounts.",
+      "load_dashboard": "Could not load dashboard information. Please verify filters."
+    }
+  },
+  "reports": {
+    "trial_balance": "Trial Balance",
+    "processing": "Processing...",
+    "generate_report": "Generate Report",
+    "loading": "Calculating consolidated balance...",
+    "code": "Code",
+    "account": "Account",
+    "group": "Group",
+    "debit": "Debit",
+    "credit": "Credit",
+    "net_balance": "Net Balance",
+    "no_data": "No transaction data found for the selected period.",
+    "total": "Totals",
+    "status": "Status",
+    "balanced": "Balanced",
+    "unbalanced": "Unbalanced",
+    "errors": {
+      "load_report": "Could not generate trial balance. Please verify filters."
+    }
+  },
+  "coa": {
+    "title": "Chart of Accounts (COA)",
+    "root_group": "Root Group",
+    "loading": "Loading accounts tree...",
+    "empty_state": "No groups configured for this tenant. Start by adding a Root Group.",
+    "create_root_group": "Create Root Group",
+    "create_subgroup": "Create Subgroup of {path}",
+    "group_code": "Group Code (alphanumeric only)",
+    "group_code_placeholder": "e.g. 1 or Current",
+    "group_name": "Group Name",
+    "group_name_placeholder": "e.g. Assets or Cash and Banks",
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "create_group": "Create Group",
+    "add_account_title": "Add Ledger Account",
+    "acc_code": "Account Code (unique)",
+    "acc_code_placeholder": "e.g. 1.1.01.01",
+    "acc_name": "Account Name",
+    "acc_name_placeholder": "e.g. Petty Cash or Checking Account",
+    "acc_type": "Account Type (Invariant)",
+    "acc_types": {
+      "asset": "Asset",
+      "liability": "Liability",
+      "equity": "Equity",
+      "revenue": "Revenue",
+      "expense": "Expense"
+    },
+    "create_account": "Create Account",
+    "confirm_delete_group": "Are you sure you want to delete this account group? This action cannot be undone.",
+    "add_subgroup_tooltip": "Add subgroup",
+    "group_btn": "Group",
+    "add_account_tooltip": "Add ledger account",
+    "account_btn": "Account",
+    "delete_group_tooltip": "Delete group",
+    "errors": {
+      "load_accounts": "Could not retrieve ledger accounts.",
+      "load_groups": "Could not retrieve account groups.",
+      "create_group": "Failed to create hierarchical group. Please try again.",
+      "create_account": "Failed to create ledger account.",
+      "delete_group": "RLS restriction or active hierarchical rule: could not delete group."
+    }
+  },
+  "journal": {
+    "date": "Accounting Date",
+    "status": "Entry Status",
+    "status_draft": "Draft (DRAFT)",
+    "status_posted": "Posted (POSTED)",
+    "entry_number": "Entry Number (POSTED)",
+    "entry_number_placeholder": "e.g. JE-2026-0001",
+    "currency": "Currency",
+    "currencies": {
+      "usd": "US Dollar",
+      "ars": "Argentine Peso",
+      "eur": "Euro",
+      "mxn": "Mexican Peso"
+    },
+    "description": "Description / Concept",
+    "description_placeholder": "Enter entry reason or description...",
+    "default_description": "Payment from Client",
+    "lines_section": "Entry Detail (Lines)",
+    "column_account": "Account Name",
+    "column_description": "Description",
+    "column_debit": "Debit ($)",
+    "column_credit": "Credit ($)",
+    "select_account": "Select account...",
+    "remove_line_tooltip": "Remove line",
+    "add_line": "Add Line",
+    "total_debit": "Total Debits",
+    "total_credit": "Total Credits",
+    "diff": "Difference",
+    "balanced_title": "Entry Balanced",
+    "balanced_desc": "Double-entry accounting rules met. Ready to post.",
+    "unbalanced_title": "Entry Unbalanced",
+    "unbalanced_desc": "Debits and Credits do not match. Difference must be 0.00 to post."
+  }
+}

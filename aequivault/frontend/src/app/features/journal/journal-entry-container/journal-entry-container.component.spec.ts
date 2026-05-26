@@ -3,6 +3,9 @@ import { JournalEntryContainerComponent } from './journal-entry-container.compon
 import { AccountService } from '../../../core/services/account.service';
 import { JournalService } from '../../../core/services/journal.service';
 import { JournalEntryStateService } from '../../../core/services/journal-entry-state.service';
+import { DashboardService } from '../../../core/services/dashboard.service';
+import { TranslationStateService } from '../../../core/services/translation-state.service';
+import { TranslocoTestingModule } from '@jsverse/transloco';
 import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { LedgerAccountDto } from '../../../core/models/ledger-account.model';
@@ -13,6 +16,7 @@ describe('JournalEntryContainerComponent', () => {
   let fixture: ComponentFixture<JournalEntryContainerComponent>;
   let accountServiceSpy: jasmine.SpyObj<AccountService>;
   let journalServiceSpy: jasmine.SpyObj<JournalService>;
+  let dashboardServiceSpy: jasmine.SpyObj<DashboardService>;
   let stateService: JournalEntryStateService;
 
   const mockAccounts: LedgerAccountDto[] = [
@@ -23,17 +27,46 @@ describe('JournalEntryContainerComponent', () => {
   beforeEach(async () => {
     accountServiceSpy = jasmine.createSpyObj('AccountService', ['getAccounts', 'createAccount', 'getGroups', 'createGroup', 'deleteGroup']);
     journalServiceSpy = jasmine.createSpyObj('JournalService', ['createEntry', 'getEntry']);
+    dashboardServiceSpy = jasmine.createSpyObj('DashboardService', ['getDashboard']);
 
     // Default mock responses
     accountServiceSpy.getAccounts.and.returnValue(of(mockAccounts));
     accountServiceSpy.getGroups.and.returnValue(of([]));
+    dashboardServiceSpy.getDashboard.and.returnValue(of({
+      totalAssets: 100,
+      totalLiabilities: 50,
+      netEquity: 50,
+      liquidityTrend: []
+    }));
+
+    const mockTranslationService = {
+      activeLanguage: () => 'en',
+      setLanguage: jasmine.createSpy('setLanguage')
+    };
 
     await TestBed.configureTestingModule({
-      imports: [JournalEntryContainerComponent],
+      imports: [
+        JournalEntryContainerComponent,
+        TranslocoTestingModule.forRoot({
+          langs: { 
+            en: {
+              sidebar: { dashboard: 'Dashboard', ledger: 'Ledger', journals: 'Journals', coa: 'Chart of Accounts', reports: 'Reports', settings: 'Settings' },
+              header: { new_entry: 'New Journal Entry' }
+            }, 
+            es: {
+              sidebar: { dashboard: 'Dashboard', ledger: 'Libro Mayor', journals: 'Diarios', coa: 'Plan de Cuentas', reports: 'Reportes', settings: 'Settings' },
+              header: { new_entry: 'Nuevo Asiento Diario' }
+            }
+          },
+          translocoConfig: { availableLangs: ['en', 'es'], defaultLang: 'en' },
+        })
+      ],
       providers: [
         JournalEntryStateService,
         { provide: AccountService, useValue: accountServiceSpy },
-        { provide: JournalService, useValue: journalServiceSpy }
+        { provide: JournalService, useValue: journalServiceSpy },
+        { provide: DashboardService, useValue: dashboardServiceSpy },
+        { provide: TranslationStateService, useValue: mockTranslationService }
       ]
     }).compileComponents();
 
@@ -152,5 +185,27 @@ describe('JournalEntryContainerComponent', () => {
     
     expect(component.activeTab()).toBe('coa');
     expect(accountServiceSpy.getGroups).toHaveBeenCalledWith(component.activeTenantId());
+  });
+
+  it('should switch to dashboard tab and trigger dashboard loading', () => {
+    fixture.detectChanges();
+    expect(component.activeTab()).toBe('entry');
+    
+    // Switch to dashboard tab
+    component.activeTab.set('dashboard');
+    fixture.detectChanges();
+    
+    expect(component.activeTab()).toBe('dashboard');
+    expect(dashboardServiceSpy.getDashboard).toHaveBeenCalled();
+  });
+
+  it('should switch languages correctly and call TranslationStateService.setLanguage', () => {
+    fixture.detectChanges();
+    const translationService = TestBed.inject(TranslationStateService);
+    
+    component.onLanguageChange('es');
+    fixture.detectChanges();
+
+    expect(translationService.setLanguage).toHaveBeenCalledWith('es');
   });
 });

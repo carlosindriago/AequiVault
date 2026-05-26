@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
 import { AccountService } from '../../../core/services/account.service';
 import { AccountGroupDto, AccountGroupNode, AccountGroupRequest } from '../../../core/models/account-group.model';
 import { LedgerAccountDto } from '../../../core/models/ledger-account.model';
@@ -9,29 +10,29 @@ import { CoaTreeNodeComponent } from '../components/coa-tree-node/coa-tree-node.
 @Component({
   selector: 'app-coa-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule, CoaTreeNodeComponent],
+  imports: [CommonModule, FormsModule, CoaTreeNodeComponent, TranslocoDirective],
   template: `
-    <div class="coa-card glass-panel">
+    <div class="coa-card glass-panel" *transloco="let t">
       <div class="coa-header">
-        <h2>Catálogo de Cuentas (Plan de Cuentas)</h2>
+        <h2>{{ t('coa.title') }}</h2>
         <button type="button" (click)="openAddRootGroupModal()" class="btn btn-primary btn-sm">
-          ＋ Grupo Raíz
+          ＋ {{ t('coa.root_group') }}
         </button>
       </div>
 
       <!-- Local Alert/Notification -->
       @if (errorMsg()) {
         <div class="error-banner">
-          <span>⚠️ {{ errorMsg() }}</span>
+          <span>⚠️ {{ t(errorMsg()) }}</span>
           <button (click)="errorMsg.set('')" class="btn-close">✕</button>
         </div>
       }
 
       <div class="tree-container">
         @if (isLoading()) {
-          <div class="loading-state">Cargando árbol de cuentas...</div>
+          <div class="loading-state">{{ t('coa.loading') }}</div>
         } @else if (rootNodes().length === 0) {
-          <div class="empty-state">No hay grupos configurados para este inquilino. Comience agregando un Grupo Raíz.</div>
+          <div class="empty-state">{{ t('coa.empty_state') }}</div>
         } @else {
           @for (node of rootNodes(); track node.id) {
             <app-coa-tree-node 
@@ -48,10 +49,10 @@ import { CoaTreeNodeComponent } from '../components/coa-tree-node/coa-tree-node.
       @if (activeModal() === 'group') {
         <div class="modal-overlay">
           <div class="modal-content glass-panel">
-            <h3>{{ groupFormTitle() }}</h3>
+            <h3>{{ groupFormParentPath() ? t('coa.create_subgroup', { path: groupFormParentPath() }) : t('coa.create_root_group') }}</h3>
             <form (ngSubmit)="onCreateGroup()" #groupForm="ngForm">
               <div class="form-group">
-                <label for="groupCode">Código del Grupo (solo alfanumérico)</label>
+                <label for="groupCode">{{ t('coa.group_code') }}</label>
                 <input 
                   id="groupCode" 
                   type="text" 
@@ -59,22 +60,22 @@ import { CoaTreeNodeComponent } from '../components/coa-tree-node/coa-tree-node.
                   name="code" 
                   required 
                   pattern="^[a-zA-Z0-9]+$"
-                  placeholder="Ej: 1 o Corrientes" />
+                  [placeholder]="t('coa.group_code_placeholder')" />
               </div>
               <div class="form-group">
-                <label for="groupName">Nombre del Grupo</label>
+                <label for="groupName">{{ t('coa.group_name') }}</label>
                 <input 
                   id="groupName" 
                   type="text" 
                   [(ngModel)]="groupFormModel.name" 
                   name="name" 
                   required 
-                  placeholder="Ej: Activos o Caja y Bancos" />
+                  [placeholder]="t('coa.group_name_placeholder')" />
               </div>
               <div class="modal-actions">
-                <button type="button" (click)="closeModal()" class="btn btn-secondary">Cancelar</button>
+                <button type="button" (click)="closeModal()" class="btn btn-secondary">{{ t('coa.cancel') }}</button>
                 <button type="submit" [disabled]="!groupForm.valid || isSubmitting()" class="btn btn-primary">
-                  {{ isSubmitting() ? 'Guardando...' : 'Crear Grupo' }}
+                  {{ isSubmitting() ? t('coa.saving') : t('coa.create_group') }}
                 </button>
               </div>
             </form>
@@ -86,42 +87,42 @@ import { CoaTreeNodeComponent } from '../components/coa-tree-node/coa-tree-node.
       @if (activeModal() === 'account') {
         <div class="modal-overlay">
           <div class="modal-content glass-panel">
-            <h3>Agregar Cuenta Contable</h3>
+            <h3>{{ t('coa.add_account_title') }}</h3>
             <form (ngSubmit)="onCreateAccount()" #accountForm="ngForm">
               <div class="form-group">
-                <label for="accCode">Código de la Cuenta (único)</label>
+                <label for="accCode">{{ t('coa.acc_code') }}</label>
                 <input 
                   id="accCode" 
                   type="text" 
                   [(ngModel)]="accountFormModel.code" 
                   name="code" 
                   required 
-                  placeholder="Ej: 1.1.01.01" />
+                  [placeholder]="t('coa.acc_code_placeholder')" />
               </div>
               <div class="form-group">
-                <label for="accName">Nombre de la Cuenta</label>
+                <label for="accName">{{ t('coa.acc_name') }}</label>
                 <input 
                   id="accName" 
                   type="text" 
                   [(ngModel)]="accountFormModel.name" 
                   name="name" 
                   required 
-                  placeholder="Ej: Caja Chica o Cuenta Corriente" />
+                  [placeholder]="t('coa.acc_name_placeholder')" />
               </div>
               <div class="form-group">
-                <label for="accType">Tipo de Cuenta (Invariante)</label>
+                <label for="accType">{{ t('coa.acc_type') }}</label>
                 <select id="accType" [(ngModel)]="accountFormModel.type" name="type" required>
-                  <option value="ASSET">ASSET (Activo)</option>
-                  <option value="LIABILITY">LIABILITY (Pasivo)</option>
-                  <option value="EQUITY">EQUITY (Patrimonio Neto)</option>
-                  <option value="REVENUE">REVENUE (Ingreso)</option>
-                  <option value="EXPENSE">EXPENSE (Egreso)</option>
+                  <option value="ASSET">ASSET ({{ t('coa.acc_types.asset') }})</option>
+                  <option value="LIABILITY">LIABILITY ({{ t('coa.acc_types.liability') }})</option>
+                  <option value="EQUITY">EQUITY ({{ t('coa.acc_types.equity') }})</option>
+                  <option value="REVENUE">REVENUE ({{ t('coa.acc_types.revenue') }})</option>
+                  <option value="EXPENSE">EXPENSE ({{ t('coa.acc_types.expense') }})</option>
                 </select>
               </div>
               <div class="modal-actions">
-                <button type="button" (click)="closeModal()" class="btn btn-secondary">Cancelar</button>
+                <button type="button" (click)="closeModal()" class="btn btn-secondary">{{ t('coa.cancel') }}</button>
                 <button type="submit" [disabled]="!accountForm.valid || isSubmitting()" class="btn btn-primary">
-                  {{ isSubmitting() ? 'Guardando...' : 'Crear Cuenta' }}
+                  {{ isSubmitting() ? t('coa.saving') : t('coa.create_account') }}
                 </button>
               </div>
             </form>
@@ -233,7 +234,7 @@ export class CoaManagerComponent implements OnInit {
 
   // Modals state
   activeModal = signal<'group' | 'account' | null>(null);
-  groupFormTitle = signal<string>('Crear Grupo Raíz');
+  groupFormParentPath = signal<string>('');
 
   // Form Models
   groupFormModel = {
@@ -249,7 +250,10 @@ export class CoaManagerComponent implements OnInit {
     type: 'ASSET' as 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE'
   };
 
-  constructor(private accountService: AccountService) {}
+  constructor(
+    private accountService: AccountService,
+    private translocoService: TranslocoService
+  ) {}
 
   ngOnInit() {
     this.loadChartOfAccounts();
@@ -273,13 +277,13 @@ export class CoaManagerComponent implements OnInit {
             this.isLoading.set(false);
           },
           error: () => {
-            this.errorMsg.set('No se pudieron recuperar las cuentas contables.');
+            this.errorMsg.set('coa.errors.load_accounts');
             this.isLoading.set(false);
           }
         });
       },
       error: () => {
-        this.errorMsg.set('No se pudieron recuperar los grupos contables.');
+        this.errorMsg.set('coa.errors.load_groups');
         this.isLoading.set(false);
       }
     });
@@ -340,7 +344,7 @@ export class CoaManagerComponent implements OnInit {
   }
 
   openAddRootGroupModal() {
-    this.groupFormTitle.set('Crear Grupo Raíz');
+    this.groupFormParentPath.set('');
     this.groupFormModel = {
       parentId: null,
       code: '',
@@ -350,7 +354,7 @@ export class CoaManagerComponent implements OnInit {
   }
 
   openAddSubgroupModal(event: { parentId: string; parentPath: string }) {
-    this.groupFormTitle.set(`Crear Subgrupo de ${event.parentPath}`);
+    this.groupFormParentPath.set(event.parentPath);
     this.groupFormModel = {
       parentId: event.parentId,
       code: '',
@@ -394,7 +398,7 @@ export class CoaManagerComponent implements OnInit {
         if (err.error && err.error.detail) {
           this.errorMsg.set(err.error.detail);
         } else {
-          this.errorMsg.set('Falla al crear el grupo jerárquico. Intente de nuevo.');
+          this.errorMsg.set('coa.errors.create_group');
         }
       }
     });
@@ -424,14 +428,15 @@ export class CoaManagerComponent implements OnInit {
         if (err.error && err.error.detail) {
           this.errorMsg.set(err.error.detail);
         } else {
-          this.errorMsg.set('Falla al crear la cuenta contable.');
+          this.errorMsg.set('coa.errors.create_account');
         }
       }
     });
   }
 
   onDeleteGroup(id: string) {
-    if (!confirm('¿Está seguro de que desea eliminar este grupo contable? Esta acción no se puede deshacer.')) {
+    const msg = this.translocoService.translate('coa.confirm_delete_group');
+    if (!confirm(msg)) {
       return;
     }
 
@@ -447,7 +452,7 @@ export class CoaManagerComponent implements OnInit {
         if (err.error && err.error.detail) {
           this.errorMsg.set(err.error.detail);
         } else {
-          this.errorMsg.set('Restricción RLS o regla jerárquica activa: no se pudo eliminar el grupo.');
+          this.errorMsg.set('coa.errors.delete_group');
         }
       }
     });

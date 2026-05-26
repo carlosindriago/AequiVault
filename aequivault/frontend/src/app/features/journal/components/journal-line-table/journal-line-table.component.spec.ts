@@ -3,6 +3,7 @@ import { JournalLineTableComponent } from './journal-line-table.component';
 import { JournalLineForm } from '../../../../core/services/journal-entry-state.service';
 import { LedgerAccountDto } from '../../../../core/models/ledger-account.model';
 import { By } from '@angular/platform-browser';
+import { TranslocoTestingModule } from '@jsverse/transloco';
 
 describe('JournalLineTableComponent', () => {
   let component: JournalLineTableComponent;
@@ -20,7 +21,16 @@ describe('JournalLineTableComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [JournalLineTableComponent]
+      imports: [
+        JournalLineTableComponent,
+        TranslocoTestingModule.forRoot({
+          langs: { en: {}, es: {} },
+          translocoConfig: {
+            availableLangs: ['en', 'es'],
+            defaultLang: 'en',
+          },
+        })
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(JournalLineTableComponent);

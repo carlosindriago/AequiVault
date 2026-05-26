@@ -1,23 +1,24 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslocoDirective } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-journal-entry-summary',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslocoDirective],
   template: `
-    <div class="summary-card">
+    <div class="summary-card" *transloco="let t">
       <div class="totals-grid">
         <div class="total-box">
-          <span class="label">Total Debe (Debits)</span>
+          <span class="label">{{ t('journal.total_debit') }}</span>
           <span class="value text-debit">{{ debitSum | currency: currency }}</span>
         </div>
         <div class="total-box">
-          <span class="label">Total Haber (Credits)</span>
+          <span class="label">{{ t('journal.total_credit') }}</span>
           <span class="value text-credit">{{ creditSum | currency: currency }}</span>
         </div>
         <div class="total-box">
-          <span class="label">Diferencia</span>
+          <span class="label">{{ t('journal.diff') }}</span>
           <span class="value" [ngClass]="difference === 0 ? 'text-balanced' : 'text-danger'">
             {{ difference | currency: currency }}
           </span>
@@ -34,11 +35,11 @@ import { CommonModule } from '@angular/common';
         </div>
         <div class="status-text">
           @if (isBalanced) {
-            <strong>Asiento Balanceado</strong>
-            <p>La partida doble se cumple perfectamente. Listo para asentar.</p>
+            <strong>{{ t('journal.balanced_title') }}</strong>
+            <p>{{ t('journal.balanced_desc') }}</p>
           } @else {
-            <strong>Asiento Desbalanceado</strong>
-            <p>El Debe y el Haber no coinciden. La diferencia debe ser 0.00 para asentar en firme.</p>
+            <strong>{{ t('journal.unbalanced_title') }}</strong>
+            <p>{{ t('journal.unbalanced_desc') }}</p>
           }
         </div>
       </div>

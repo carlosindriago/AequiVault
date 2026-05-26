@@ -1,0 +1,344 @@
+import { Component, Input, OnInit, OnChanges, SimpleChanges, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { TranslocoDirective } from '@jsverse/transloco';
+import { DashboardService } from '../../../core/services/dashboard.service';
+import { AccountService } from '../../../core/services/account.service';
+import { DashboardDto } from '../../../core/models/dashboard.model';
+import { LedgerAccountDto } from '../../../core/models/ledger-account.model';
+import { KpiCardComponent } from '../components/kpi-card/kpi-card.component';
+import { LiquidityChartComponent } from '../components/liquidity-chart/liquidity-chart.component';
+
+@Component({
+  selector: 'app-dashboard-container',
+  standalone: true,
+  imports: [CommonModule, FormsModule, KpiCardComponent, LiquidityChartComponent, TranslocoDirective],
+  template: `
+    <div class="dashboard-wrapper" *transloco="let t">
+      <div class="dashboard-header-bar">
+        <h2>{{ t('dashboard.title') }}</h2>
+        
+        <div class="dashboard-filters">
+          <div class="filter-item">
+            <label for="cashAccountSelect">{{ t('dashboard.liquidity_account') }}</label>
+            <select 
+              id="cashAccountSelect" 
+              [ngModel]="selectedCashAccountId()" 
+              (ngModelChange)="onCashAccountChange($event)"
+              class="filter-select">
+              @for (acc of cashAccounts(); track acc.id) {
+                <option [value]="acc.id">{{ acc.code }} - {{ acc.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="filter-item">
+            <label for="startDate">{{ t('dashboard.start_date') }}</label>
+            <input 
+              id="startDate"
+              type="date" 
+              [ngModel]="startDate()" 
+              (ngModelChange)="onStartDateChange($event)"
+              class="filter-input" />
+          </div>
+
+          <div class="filter-item">
+            <label for="endDate">{{ t('dashboard.end_date') }}</label>
+            <input 
+              id="endDate"
+              type="date" 
+              [ngModel]="endDate()" 
+              (ngModelChange)="onEndDateChange($event)"
+              class="filter-input" />
+          </div>
+          
+          <div class="filter-item button-item">
+            <button type="button" (click)="fetchDashboard()" class="btn btn-primary" [disabled]="isLoading() || !selectedCashAccountId()">
+              {{ isLoading() ? t('dashboard.updating') : t('dashboard.refresh') }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      @if (errorMsg()) {
+        <div class="error-banner">
+          <span>⚠️ {{ t(errorMsg()) }}</span>
+          <button (click)="errorMsg.set('')" class="btn-close">✕</button>
+        </div>
+      }
+
+      @if (isLoading()) {
+        <div class="loading-state">{{ t('dashboard.loading') }}</div>
+      } @else {
+        <!-- KPI Summary Grid -->
+        <div class="kpi-grid">
+          <app-kpi-card 
+            [title]="t('dashboard.assets')" 
+            [value]="dashboardData()?.totalAssets || 0" 
+            [currency]="currency" 
+            type="success">
+          </app-kpi-card>
+          
+          <app-kpi-card 
+            [title]="t('dashboard.liabilities')" 
+            [value]="dashboardData()?.totalLiabilities || 0" 
+            [currency]="currency" 
+            type="danger">
+          </app-kpi-card>
+          
+          <app-kpi-card 
+            [title]="t('dashboard.equity')" 
+            [value]="dashboardData()?.netEquity || 0" 
+            [currency]="currency" 
+            type="info">
+          </app-kpi-card>
+        </div>
+
+        <!-- Liquidity Area Chart -->
+        <div class="chart-section">
+          <app-liquidity-chart 
+            [data]="dashboardData()?.liquidityTrend || []" 
+            [currency]="currency">
+          </app-liquidity-chart>
+        </div>
+      }
+    </div>
+  `,
+  styles: [`
+    .dashboard-wrapper {
+      margin-top: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    .dashboard-header-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .dashboard-header-bar h2 {
+      margin: 0;
+      color: #f8fafc;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    
+    /* Filters bar */
+    .dashboard-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      align-items: flex-end;
+      background: rgba(15, 23, 42, 0.4);
+      padding: 1.25rem 1.5rem;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .filter-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .filter-item label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #94a3b8;
+    }
+    
+    .filter-select, .filter-input {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      color: #ffffff;
+      padding: 0.6rem 1rem;
+      font-size: 0.95rem;
+      outline: none;
+      transition: var(--transition-smooth);
+      font-family: var(--font-family);
+    }
+    
+    .filter-select {
+      min-width: 200px;
+      cursor: pointer;
+    }
+    
+    .filter-select option {
+      background-color: var(--bg-secondary);
+      color: #ffffff;
+    }
+    
+    .filter-select:focus, .filter-input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
+    }
+    
+    .button-item {
+      margin-left: auto;
+    }
+    
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+    
+    /* Error Alert */
+    .error-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+    }
+    
+    .btn-close {
+      background: transparent;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    
+    .loading-state {
+      text-align: center;
+      padding: 5rem 2rem;
+      color: #94a3b8;
+      font-size: 0.95rem;
+      font-style: italic;
+    }
+    
+    .chart-section {
+      min-height: 300px;
+    }
+  `]
+})
+export class DashboardContainerComponent implements OnInit, OnChanges {
+  @Input({ required: true }) tenantId!: string;
+  @Input() currency: string = 'USD';
+
+  startDate = signal<string>('');
+  endDate = signal<string>('');
+  dashboardData = signal<DashboardDto | null>(null);
+  isLoading = signal<boolean>(false);
+  errorMsg = signal<string>('');
+
+  cashAccounts = signal<LedgerAccountDto[]>([]);
+  selectedCashAccountId = signal<string>('');
+
+  constructor(
+    private dashboardService: DashboardService,
+    private accountService: AccountService
+  ) {}
+
+  ngOnInit() {
+    const today = new Date();
+    const past30Days = new Date();
+    past30Days.setDate(today.getDate() - 30);
+
+    const formatDate = (d: Date) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    this.startDate.set(formatDate(past30Days));
+    this.endDate.set(formatDate(today));
+    
+    this.loadAccountsAndFetch();
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['tenantId'] && !changes['tenantId'].firstChange) {
+      this.loadAccountsAndFetch();
+    }
+  }
+
+  loadAccountsAndFetch() {
+    if (!this.tenantId) return;
+
+    this.isLoading.set(true);
+    this.errorMsg.set('');
+
+    this.accountService.getAccounts(this.tenantId).subscribe({
+      next: (accounts) => {
+        const assets = accounts.filter(acc => acc.type === 'ASSET');
+        this.cashAccounts.set(assets);
+
+        if (assets.length === 0) {
+          this.isLoading.set(false);
+          this.errorMsg.set('dashboard.errors.no_assets');
+          this.dashboardData.set(null);
+          this.selectedCashAccountId.set('');
+          return;
+        }
+
+        let defaultAcc = assets.find(acc => acc.code === '1.01' || acc.code.startsWith('1.01'));
+        if (!defaultAcc) {
+          defaultAcc = assets[0];
+        }
+
+        this.selectedCashAccountId.set(defaultAcc.id);
+        this.fetchDashboard();
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        this.errorMsg.set('dashboard.errors.load_accounts');
+        this.dashboardData.set(null);
+      }
+    });
+  }
+
+  onCashAccountChange(id: string) {
+    this.selectedCashAccountId.set(id);
+    this.fetchDashboard();
+  }
+
+  onStartDateChange(val: string) {
+    this.startDate.set(val);
+    this.fetchDashboard();
+  }
+
+  onEndDateChange(val: string) {
+    this.endDate.set(val);
+    this.fetchDashboard();
+  }
+
+  fetchDashboard() {
+    const cashId = this.selectedCashAccountId();
+    const start = this.startDate();
+    const end = this.endDate();
+
+    if (!this.tenantId || !cashId || !start || !end) {
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.errorMsg.set('');
+
+    this.dashboardService.getDashboard(this.tenantId, start, end, cashId).subscribe({
+      next: (data) => {
+        this.dashboardData.set(data);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        if (err.error && err.error.detail) {
+          this.errorMsg.set(err.error.detail);
+        } else {
+          this.errorMsg.set('dashboard.errors.load_dashboard');
+        }
+        this.dashboardData.set(null);
+      }
+    });
+  }
+}

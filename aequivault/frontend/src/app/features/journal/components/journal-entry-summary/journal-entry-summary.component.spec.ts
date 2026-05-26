@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JournalEntrySummaryComponent } from './journal-entry-summary.component';
 import { By } from '@angular/platform-browser';
+import { TranslocoTestingModule } from '@jsverse/transloco';
 
 describe('JournalEntrySummaryComponent', () => {
   let component: JournalEntrySummaryComponent;
@@ -8,7 +9,28 @@ describe('JournalEntrySummaryComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [JournalEntrySummaryComponent]
+      imports: [
+        JournalEntrySummaryComponent,
+        TranslocoTestingModule.forRoot({
+          langs: {
+            es: {
+              journal: {
+                total_debit: 'Total Debe (Debits)',
+                total_credit: 'Total Haber (Credits)',
+                diff: 'Diferencia',
+                balanced_title: 'Asiento Balanceado',
+                balanced_desc: 'La partida doble se cumple perfectamente. Listo para asentar.',
+                unbalanced_title: 'Asiento Desbalanceado',
+                unbalanced_desc: 'El Debe y el Haber no coinciden. La diferencia debe ser 0.00 para asentar en firme.'
+              }
+            }
+          },
+          translocoConfig: {
+            availableLangs: ['es'],
+            defaultLang: 'es',
+          },
+        })
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(JournalEntrySummaryComponent);

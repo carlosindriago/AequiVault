@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { JournalEntryFormComponent } from './journal-entry-form.component';
 import { By } from '@angular/platform-browser';
+import { TranslocoTestingModule } from '@jsverse/transloco';
 
 describe('JournalEntryFormComponent', () => {
   let component: JournalEntryFormComponent;
@@ -8,7 +9,16 @@ describe('JournalEntryFormComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [JournalEntryFormComponent]
+      imports: [
+        JournalEntryFormComponent,
+        TranslocoTestingModule.forRoot({
+          langs: { en: {}, es: {} },
+          translocoConfig: {
+            availableLangs: ['en', 'es'],
+            defaultLang: 'en',
+          },
+        })
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(JournalEntryFormComponent);

@@ -1,15 +1,16 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslocoDirective } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-journal-entry-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslocoDirective],
   template: `
-    <div class="form-header-grid">
+    <div class="form-header-grid" *transloco="let t">
       <div class="form-group">
-        <label for="date">Fecha Contable</label>
+        <label for="date">{{ t('journal.date') }}</label>
         <input 
           id="date" 
           type="date" 
@@ -19,53 +20,53 @@ import { FormsModule } from '@angular/forms';
       </div>
 
       <div class="form-group">
-        <label for="status">Estado del Asiento</label>
+        <label for="status">{{ t('journal.status') }}</label>
         <select 
           id="status" 
           [ngModel]="status" 
           (ngModelChange)="statusChange.emit($event)">
-          <option value="DRAFT">Borrador (DRAFT)</option>
-          <option value="POSTED">Asentado Firme (POSTED)</option>
+          <option value="DRAFT">{{ t('journal.status_draft') }}</option>
+          <option value="POSTED">{{ t('journal.status_posted') }}</option>
         </select>
       </div>
 
       <div class="form-group" [ngStyle]="{'visibility': status === 'POSTED' ? 'visible' : 'hidden'}">
-        <label for="entryNumber">Número de Asiento (POSTED)</label>
+        <label for="entryNumber">{{ t('journal.entry_number') }}</label>
         <input 
           id="entryNumber" 
           type="text" 
-          placeholder="Ej: JE-2026-0001"
+          [placeholder]="t('journal.entry_number_placeholder')"
           [ngModel]="entryNumber" 
           (ngModelChange)="entryNumberChange.emit($event)" />
       </div>
 
       <div class="form-group">
-        <label for="currency">Divisa (Currency)</label>
+        <label for="currency">{{ t('journal.currency') }}</label>
         <select 
           id="currency" 
           [ngModel]="currency" 
           (ngModelChange)="currencyChange.emit($event)">
-          <option value="USD">USD - Dólar Estadounidense</option>
-          <option value="ARS">ARS - Peso Argentino</option>
-          <option value="EUR">EUR - Euro</option>
-          <option value="MXN">MXN - Peso Mexicano</option>
+          <option value="USD">USD - {{ t('journal.currencies.usd') }}</option>
+          <option value="ARS">ARS - {{ t('journal.currencies.ars') }}</option>
+          <option value="EUR">EUR - {{ t('journal.currencies.eur') }}</option>
+          <option value="MXN">MXN - {{ t('journal.currencies.mxn') }}</option>
         </select>
       </div>
     </div>
 
-    <div class="form-group full-width">
-      <label for="description">Descripción / Concepto</label>
+    <div class="form-group full-width" *transloco="let t">
+      <label for="description">{{ t('journal.description') }}</label>
       <textarea 
         id="description" 
         rows="2" 
-        placeholder="Escriba el motivo o descripción del asiento..."
+        [placeholder]="t('journal.description_placeholder')"
         [ngModel]="description" 
         (ngModelChange)="descriptionChange.emit($event)">
       </textarea>
     </div>
 
-    <div class="lines-section">
-      <h3>Detalle del Asiento (Partidas)</h3>
+    <div class="lines-section" *transloco="let t">
+      <h3>{{ t('journal.lines_section') }}</h3>
       <ng-content></ng-content>
     </div>
   `,

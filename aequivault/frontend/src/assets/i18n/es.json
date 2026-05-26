@@ -1,0 +1,131 @@
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "ledger": "Libro Mayor",
+    "journals": "Diarios",
+    "coa": "Plan de Cuentas",
+    "reports": "Reportes",
+    "settings": "Configuración"
+  },
+  "header": {
+    "new_entry": "Nuevo Asiento Diario",
+    "profile": "Perfil",
+    "notifications": "Notificaciones"
+  },
+  "dashboard": {
+    "title": "Panel de Indicadores Financieros",
+    "liquidity_account": "Cuenta de Liquidez",
+    "start_date": "Fecha Inicio",
+    "end_date": "Fecha Fin",
+    "refresh": "Refrescar",
+    "updating": "Actualizando...",
+    "loading": "Calculando métricas y saldos en tiempo real...",
+    "assets": "Total Activos",
+    "liabilities": "Total Pasivos",
+    "equity": "Patrimonio Neto",
+    "trend_title": "Tendencia de Liquidez",
+    "trend_subtitle": "Flujo de caja diario (Últimos 30 días)",
+    "no_data": "No hay datos de saldos disponibles",
+    "vs_previous": "vs anterior",
+    "errors": {
+      "no_assets": "No se encontraron cuentas de activos. Registre cuentas en el Plan de Cuentas para visualizar métricas.",
+      "load_accounts": "Error al cargar el catálogo de cuentas contables.",
+      "load_dashboard": "No se pudo cargar la información del dashboard. Verifique los filtros."
+    }
+  },
+  "reports": {
+    "trial_balance": "Balance de Comprobación",
+    "processing": "Procesando...",
+    "generate_report": "Generar Reporte",
+    "loading": "Calculando balance consolidado...",
+    "code": "Código",
+    "account": "Cuenta",
+    "group": "Grupo",
+    "debit": "Débito",
+    "credit": "Crédito",
+    "net_balance": "Saldo Neto",
+    "no_data": "No se encontraron datos de transacciones para el período seleccionado.",
+    "total": "Totales",
+    "status": "Estado",
+    "balanced": "Cuadrado",
+    "unbalanced": "Descuadrado",
+    "errors": {
+      "load_report": "No se pudo generar el balance de comprobación. Verifique los filtros."
+    }
+  },
+  "coa": {
+    "title": "Catálogo de Cuentas (Plan de Cuentas)",
+    "root_group": "Grupo Raíz",
+    "loading": "Cargando árbol de cuentas...",
+    "empty_state": "No hay grupos configurados para este inquilino. Comience agregando un Grupo Raíz.",
+    "create_root_group": "Crear Grupo Raíz",
+    "create_subgroup": "Crear Subgrupo de {path}",
+    "group_code": "Código del Grupo (solo alfanumérico)",
+    "group_code_placeholder": "Ej: 1 o Corrientes",
+    "group_name": "Nombre del Grupo",
+    "group_name_placeholder": "Ej: Activos o Caja y Bancos",
+    "cancel": "Cancelar",
+    "saving": "Guardando...",
+    "create_group": "Crear Grupo",
+    "add_account_title": "Agregar Cuenta Contable",
+    "acc_code": "Código de la Cuenta (único)",
+    "acc_code_placeholder": "Ej: 1.1.01.01",
+    "acc_name": "Nombre de la Cuenta",
+    "acc_name_placeholder": "Ej: Caja Chica o Cuenta Corriente",
+    "acc_type": "Tipo de Cuenta (Invariante)",
+    "acc_types": {
+      "asset": "Activo",
+      "liability": "Pasivo",
+      "equity": "Patrimonio Neto",
+      "revenue": "Ingreso",
+      "expense": "Egreso"
+    },
+    "create_account": "Crear Cuenta",
+    "confirm_delete_group": "¿Está seguro de que desea eliminar este grupo contable? Esta acción no se puede deshacer.",
+    "add_subgroup_tooltip": "Agregar subgrupo",
+    "group_btn": "Grupo",
+    "add_account_tooltip": "Agregar cuenta contable",
+    "account_btn": "Cuenta",
+    "delete_group_tooltip": "Eliminar grupo",
+    "errors": {
+      "load_accounts": "No se pudieron recuperar las cuentas contables.",
+      "load_groups": "No se pudieron recuperar los grupos contables.",
+      "create_group": "Falla al crear el grupo jerárquico. Intente de nuevo.",
+      "create_account": "Falla al crear la cuenta contable.",
+      "delete_group": "Restricción RLS o regla jerárquica activa: no se pudo eliminar el grupo."
+    }
+  },
+  "journal": {
+    "date": "Fecha Contable",
+    "status": "Estado del Asiento",
+    "status_draft": "Borrador (DRAFT)",
+    "status_posted": "Asentado Firme (POSTED)",
+    "entry_number": "Número de Asiento (POSTED)",
+    "entry_number_placeholder": "Ej: JE-2026-0001",
+    "currency": "Divisa",
+    "currencies": {
+      "usd": "Dólar Estadounidense",
+      "ars": "Peso Argentino",
+      "eur": "Euro",
+      "mxn": "Peso Mexicano"
+    },
+    "description": "Descripción / Concepto",
+    "description_placeholder": "Escriba el motivo o descripción del asiento...",
+    "default_description": "Pago de Cliente",
+    "lines_section": "Detalle del Asiento (Partidas)",
+    "column_account": "Nombre de Cuenta",
+    "column_description": "Descripción",
+    "column_debit": "Débito ($)",
+    "column_credit": "Crédito ($)",
+    "select_account": "Seleccione cuenta...",
+    "remove_line_tooltip": "Eliminar línea",
+    "add_line": "Agregar Línea",
+    "total_debit": "Total Debe (Debits)",
+    "total_credit": "Total Haber (Credits)",
+    "diff": "Diferencia",
+    "balanced_title": "Asiento Balanceado",
+    "balanced_desc": "La partida doble se cumple perfectamente. Listo para asentar.",
+    "unbalanced_title": "Asiento Desbalanceado",
+    "unbalanced_desc": "El Debe y el Haber no coinciden. La diferencia debe ser 0.00 para asentar en firme."
+  }
+}

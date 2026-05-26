@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { AppComponent } from './app.component';
 import { AccountService } from './core/services/account.service';
 import { JournalService } from './core/services/journal.service';
+import { TranslocoTestingModule } from '@jsverse/transloco';
 import { of } from 'rxjs';
 
 describe('AppComponent', () => {
@@ -15,7 +16,13 @@ describe('AppComponent', () => {
     accountServiceSpy.getAccounts.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
-      imports: [AppComponent],
+      imports: [
+        AppComponent,
+        TranslocoTestingModule.forRoot({
+          langs: { en: {}, es: {} },
+          translocoConfig: { availableLangs: ['en', 'es'], defaultLang: 'en' }
+        })
+      ],
       providers: [
         { provide: AccountService, useValue: accountServiceSpy },
         { provide: JournalService, useValue: journalServiceSpy }

@@ -1,13 +1,14 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslocoDirective } from '@jsverse/transloco';
 import { AccountGroupNode } from '../../../../core/models/account-group.model';
 
 @Component({
   selector: 'app-coa-tree-node',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslocoDirective],
   template: `
-    <div class="tree-node-wrapper">
+    <div class="tree-node-wrapper" *transloco="let t">
       <div class="node-header" [class.root-node]="node.path.indexOf('.') === -1">
         <div class="node-info" (click)="toggleExpand()">
           <span class="toggle-icon">
@@ -27,21 +28,21 @@ import { AccountGroupNode } from '../../../../core/models/account-group.model';
             type="button" 
             (click)="addNode.emit({ parentId: node.id, parentPath: node.path })" 
             class="action-btn btn-add-group"
-            title="Agregar subgrupo">
-            ＋ Grupo
+            [title]="t('coa.add_subgroup_tooltip')">
+            ＋ {{ t('coa.group_btn') }}
           </button>
           <button 
             type="button" 
             (click)="addAccount.emit({ groupId: node.id })" 
             class="action-btn btn-add-account"
-            title="Agregar cuenta contable">
-            ＋ Cuenta
+            [title]="t('coa.add_account_tooltip')">
+            ＋ {{ t('coa.account_btn') }}
           </button>
           <button 
             type="button" 
             (click)="deleteNode.emit(node.id)" 
             class="action-btn btn-delete-group"
-            title="Eliminar grupo">
+            [title]="t('coa.delete_group_tooltip')">
             ✕
           </button>
         </div>
@@ -67,7 +68,7 @@ import { AccountGroupNode } from '../../../../core/models/account-group.model';
               <span class="leaf-code">{{ acc.code }}</span>
               <span class="leaf-name">{{ acc.name }}</span>
               <span class="leaf-type badge" [ngClass]="'badge-' + acc.type.toLowerCase()">
-                {{ acc.type }}
+                {{ t('coa.acc_types.' + acc.type.toLowerCase()) }}
               </span>
             </div>
           }
