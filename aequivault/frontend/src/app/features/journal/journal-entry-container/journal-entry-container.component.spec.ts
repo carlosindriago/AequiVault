@@ -177,7 +177,7 @@ describe('JournalEntryContainerComponent', () => {
 
   it('should switch tabs correctly and load chart of accounts when coa tab is selected', () => {
     fixture.detectChanges();
-    expect(component.activeTab()).toBe('entry');
+    expect(component.activeTab()).toBe('dashboard');
     
     // Switch to coa tab
     component.activeTab.set('coa');
@@ -188,6 +188,7 @@ describe('JournalEntryContainerComponent', () => {
   });
 
   it('should switch to dashboard tab and trigger dashboard loading', () => {
+    component.activeTab.set('entry');
     fixture.detectChanges();
     expect(component.activeTab()).toBe('entry');
     

@@ -7,6 +7,7 @@ describe('TranslationStateService', () => {
   let translocoServiceSpy: jasmine.SpyObj<TranslocoService>;
 
   beforeEach(() => {
+    localStorage.removeItem('aequivault_lang');
     translocoServiceSpy = jasmine.createSpyObj('TranslocoService', ['getActiveLang', 'setActiveLang']);
     translocoServiceSpy.getActiveLang.and.returnValue('en');
 
@@ -31,6 +32,14 @@ describe('TranslationStateService', () => {
   it('should update signal and call transloco setActiveLang on setLanguage', () => {
     service.setLanguage('es');
     expect(service.activeLanguage()).toBe('es');
+    expect(translocoServiceSpy.setActiveLang).toHaveBeenCalledWith('es');
+    expect(localStorage.getItem('aequivault_lang')).toBe('es');
+  });
+
+  it('should initialize with saved language from localStorage if present', () => {
+    localStorage.setItem('aequivault_lang', 'es');
+    const testService = new TranslationStateService(translocoServiceSpy);
+    expect(testService.activeLanguage()).toBe('es');
     expect(translocoServiceSpy.setActiveLang).toHaveBeenCalledWith('es');
   });
 });

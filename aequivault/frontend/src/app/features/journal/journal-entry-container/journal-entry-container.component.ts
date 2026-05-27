@@ -873,7 +873,7 @@ export class JournalEntryContainerComponent implements OnInit {
   activeTenantId = signal<string>('212f7927-ed0d-495c-b39b-94364d5e2f9b');
   accounts = signal<LedgerAccountDto[]>([]);
   isLoading = signal<boolean>(false);
-  activeTab = signal<'dashboard' | 'entry' | 'coa' | 'reports'>('entry');
+  activeTab = signal<'dashboard' | 'entry' | 'coa' | 'reports'>('dashboard');
   
   displayDate = computed(() => {
     const rawDate = this.state.date();
