@@ -5,7 +5,7 @@ import { JournalService } from '../../../core/services/journal.service';
 import { JournalEntryStateService } from '../../../core/services/journal-entry-state.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { TranslationStateService } from '../../../core/services/translation-state.service';
-import { TranslocoTestingModule } from '@jsverse/transloco';
+import { TranslocoTestingModule, TranslocoService } from '@jsverse/transloco';
 import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { LedgerAccountDto } from '../../../core/models/ledger-account.model';
@@ -51,11 +51,15 @@ describe('JournalEntryContainerComponent', () => {
           langs: { 
             en: {
               sidebar: { dashboard: 'Dashboard', ledger: 'Ledger', journals: 'Journals', coa: 'Chart of Accounts', reports: 'Reports', settings: 'Settings' },
-              header: { new_entry: 'New Journal Entry' }
+              header: { new_entry: 'New Journal Entry' },
+              'journal.error_accounts_title': 'Error loading accounts',
+              'journal.error_accounts_detail': 'Could not retrieve ledger accounts due to network or RLS restrictions.'
             }, 
             es: {
               sidebar: { dashboard: 'Dashboard', ledger: 'Libro Mayor', journals: 'Diarios', coa: 'Plan de Cuentas', reports: 'Reportes', settings: 'Settings' },
-              header: { new_entry: 'Nuevo Asiento Diario' }
+              header: { new_entry: 'Nuevo Asiento Diario' },
+              'journal.error_accounts_title': 'Error al cargar cuentas',
+              'journal.error_accounts_detail': 'No se pudieron recuperar las cuentas de mayor debido a restricciones RLS o de red.'
             }
           },
           translocoConfig: { availableLangs: ['en', 'es'], defaultLang: 'en' },
@@ -73,6 +77,20 @@ describe('JournalEntryContainerComponent', () => {
     fixture = TestBed.createComponent(JournalEntryContainerComponent);
     component = fixture.componentInstance;
     stateService = TestBed.inject(JournalEntryStateService);
+
+    const translocoService = TestBed.inject(TranslocoService);
+    translocoService.setActiveLang('en');
+    spyOn(translocoService, 'translate').and.callFake(((key: any, params?: any, lang?: any): any => {
+      if (key === 'journal.error_accounts_title') return 'Error loading accounts';
+      if (key === 'journal.error_accounts_detail') return 'Could not retrieve ledger accounts due to network or RLS restrictions.';
+      if (key === 'journal.error_connection_title') return 'Connection Failure';
+      if (key === 'journal.error_connection_detail') return 'Could not connect to AequiVault API. Ensure the backend is running on port 8080.';
+      if (key === 'journal.success_title') return 'Journal Entry Posted Successfully';
+      if (key === 'journal.success_detail') {
+        return `The journal entry of type ${params?.status || 'POSTED'} was persisted in AequiVault. Assigned ID: ${params?.id || 'je-uuid'}`;
+      }
+      return key;
+    }) as any);
   });
 
   it('should create and fetch accounts on init', () => {
@@ -99,7 +117,7 @@ describe('JournalEntryContainerComponent', () => {
 
     expect(component.notification()).toBeTruthy();
     expect(component.notification()?.type).toBe('error');
-    expect(component.notification()?.title).toBe('Error al cargar cuentas');
+    expect(component.notification()?.title).toBe('Error loading accounts');
   });
 
   it('should submit entry successfully and reset state', () => {

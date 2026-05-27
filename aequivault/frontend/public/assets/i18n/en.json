@@ -12,6 +12,10 @@
     "profile": "Profile",
     "notifications": "Notifications"
   },
+  "tenant": {
+    "tenant_a": "Tenant A: Alpha Corporation",
+    "tenant_b": "Tenant B: Omega Consulting"
+  },
   "dashboard": {
     "title": "Financial Indicators Dashboard",
     "liquidity_account": "Liquidity Account",
@@ -126,6 +130,21 @@
     "balanced_title": "Entry Balanced",
     "balanced_desc": "Double-entry accounting rules met. Ready to post.",
     "unbalanced_title": "Entry Unbalanced",
-    "unbalanced_desc": "Debits and Credits do not match. Difference must be 0.00 to post."
+    "unbalanced_desc": "Debits and Credits do not match. Difference must be 0.00 to post.",
+    "options_title": "Entry Options & Metadata (State, Currency, Asiento)",
+    "transaction_date": "Transaction Date",
+    "totals": "Totals",
+    "status_label": "Status",
+    "status_balanced_short": "Balanced",
+    "status_unbalanced_short": "Unbalanced",
+    "reset_form": "Reset Form",
+    "post_entry": "Post Journal Entry",
+    "processing": "Processing...",
+    "success_title": "Journal Entry Posted Successfully",
+    "success_detail": "The journal entry of type {status} was persisted in AequiVault. Assigned ID: {id}",
+    "error_accounts_title": "Error loading accounts",
+    "error_accounts_detail": "Could not retrieve ledger accounts due to network or RLS restrictions.",
+    "error_connection_title": "Connection Failure",
+    "error_connection_detail": "Could not connect to AequiVault API. Ensure the backend is running on port 8080."
   }
 }

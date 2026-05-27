@@ -13,7 +13,7 @@ import { CoaManagerComponent } from '../coa-manager/coa-manager.component';
 import { ReportContainerComponent } from '../report-container/report-container.component';
 import { DashboardContainerComponent } from '../dashboard-container/dashboard-container.component';
 import { TranslationStateService } from '../../../core/services/translation-state.service';
-import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-journal-entry-container',
@@ -31,7 +31,7 @@ import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
     TranslocoPipe
   ],
   template: `
-    <div class="app-layout">
+    <div class="app-layout" *transloco="let t">
       <!-- Left Sidebar Navigation -->
       <aside class="sidebar">
         <div class="sidebar-brand">
@@ -50,7 +50,7 @@ import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
           <h1 class="brand-name">AequiVault</h1>
         </div>
 
-        <nav class="sidebar-menu" *transloco="let t">
+        <nav class="sidebar-menu">
           <button 
             type="button" 
             class="menu-btn" 
@@ -125,7 +125,7 @@ import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 
       <!-- Right Main Workspace Panel -->
       <main class="main-content">
-        <header class="top-header" *transloco="let t">
+        <header class="top-header">
           <div class="header-title-section">
             <h2 class="page-title">
               @if (activeTab() === 'entry') {
@@ -191,8 +191,8 @@ import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
         <div class="tenant-section">
           <div class="tenant-dropdown-container">
             <select class="tenant-select" [ngModel]="activeTenantId()" (ngModelChange)="onTenantChange($event)">
-              <option value="212f7927-ed0d-495c-b39b-94364d5e2f9b">Tenant A: Corporación Alpha</option>
-              <option value="5ace6e00-1995-4012-a708-c8d45f6f4ff8">Tenant B: Consultora Omega</option>
+              <option value="212f7927-ed0d-495c-b39b-94364d5e2f9b">{{ t('tenant.tenant_a') }}</option>
+              <option value="5ace6e00-1995-4012-a708-c8d45f6f4ff8">{{ t('tenant.tenant_b') }}</option>
             </select>
             <span class="tenant-arrow">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -227,7 +227,7 @@ import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
               <!-- Collapsible Options Panel for Form Details (keeps standard Angular inputs testable) -->
               <details class="metadata-details">
                 <summary class="metadata-summary">
-                  <span>🛠️ Entry Options & Metadata (State, Currency, Asiento)</span>
+                  <span>🛠️ {{ t('journal.options_title') }}</span>
                 </summary>
                 <div class="metadata-content">
                   <app-journal-entry-form
@@ -250,7 +250,7 @@ import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
               <!-- Central Premium Glass Card -->
               <div class="journal-card glass-panel">
                 <div class="card-header">
-                  <span class="date-label">Transaction Date</span>
+                  <span class="date-label">{{ t('journal.transaction_date') }}</span>
                   <div class="date-picker-wrapper">
                     <span class="formatted-date">{{ displayDate() }}</span>
                     <input 
@@ -266,7 +266,7 @@ import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
                   <input 
                     type="text" 
                     class="concept-input" 
-                    placeholder="Entry Concept (Description)..."
+                    [placeholder]="t('journal.description_placeholder')"
                     [ngModel]="state.description()" 
                     (ngModelChange)="state.description.set($event)" />
                 </div>
@@ -284,7 +284,7 @@ import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
                 <!-- Totals & Status indicators footer inside the Card -->
                 <div class="card-footer">
                   <div class="summary-line">
-                    <span class="totals-label">Totals</span>
+                    <span class="totals-label">{{ t('journal.totals') }}</span>
                     <div class="totals-values">
                       <span class="total-val debit-total">{{ state.debitSum() | currency: state.currency() }}</span>
                       <span class="total-val credit-total">{{ state.creditSum() | currency: state.currency() }}</span>
@@ -303,7 +303,7 @@ import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
                         }
                       </span>
                       <span class="status-text">
-                        Status: {{ state.isBalanced() ? 'Balanced' : 'Unbalanced' }}
+                        {{ t('journal.status_label') }}: {{ state.isBalanced() ? t('journal.status_balanced_short') : t('journal.status_unbalanced_short') }}
                       </span>
                     </div>
                   </div>
@@ -316,7 +316,7 @@ import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
                   type="button" 
                   (click)="resetForm()" 
                   class="btn btn-secondary">
-                  Reset Form
+                  {{ t('journal.reset_form') }}
                 </button>
                 <button 
                   type="button" 
@@ -324,9 +324,9 @@ import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
                   (click)="submitEntry()" 
                   class="btn btn-primary">
                   @if (isLoading()) {
-                    Processing...
+                    {{ t('journal.processing') }}
                   } @else {
-                    Post Journal Entry
+                    {{ t('journal.post_entry') }}
                   }
                 </button>
               </div>
@@ -879,7 +879,9 @@ export class JournalEntryContainerComponent implements OnInit {
     const rawDate = this.state.date();
     if (!rawDate) return '';
     const dateObj = new Date(rawDate + 'T12:00:00'); // Prevent timezone offset issues
-    return dateObj.toLocaleDateString('en-US', {
+    const lang = this.translationState.activeLanguage();
+    const locale = lang === 'es' ? 'es-ES' : 'en-US';
+    return dateObj.toLocaleDateString(locale, {
       month: 'long',
       day: 'numeric',
       year: 'numeric'
@@ -897,7 +899,8 @@ export class JournalEntryContainerComponent implements OnInit {
     public state: JournalEntryStateService,
     private accountService: AccountService,
     private journalService: JournalService,
-    public translationState: TranslationStateService
+    public translationState: TranslationStateService,
+    private translocoService: TranslocoService
   ) {}
 
   ngOnInit() {
@@ -922,7 +925,10 @@ export class JournalEntryContainerComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: (err) => {
-        this.showErrorNotification('Error al cargar cuentas', 'No se pudieron recuperar las cuentas de mayor debido a restricciones RLS o de red.');
+        this.showErrorNotification(
+          this.translocoService.translate('journal.error_accounts_title', {}, this.translationState.activeLanguage()),
+          this.translocoService.translate('journal.error_accounts_detail', {}, this.translationState.activeLanguage())
+        );
         this.isLoading.set(false);
       }
     });
@@ -954,8 +960,8 @@ export class JournalEntryContainerComponent implements OnInit {
       next: (response) => {
         this.notification.set({
           type: 'success',
-          title: 'Asiento Registrado Exitosamente',
-          detail: `El asiento contable de tipo ${response.status} fue persistido en AequiVault. ID asignado: ${response.id}`
+          title: this.translocoService.translate('journal.success_title', {}, this.translationState.activeLanguage()),
+          detail: this.translocoService.translate('journal.success_detail', { status: response.status, id: response.id }, this.translationState.activeLanguage())
         });
         this.state.reset();
         this.isLoading.set(false);
@@ -1002,7 +1008,10 @@ export class JournalEntryContainerComponent implements OnInit {
       
       this.showErrorNotification(title, detail, errorDetails.length > 0 ? errorDetails : undefined);
     } else {
-      this.showErrorNotification('Falla en la Conexión', 'No se pudo conectar con la API de AequiVault. Asegúrese de que el backend esté ejecutándose en el puerto 8080.');
+      this.showErrorNotification(
+        this.translocoService.translate('journal.error_connection_title', {}, this.translationState.activeLanguage()),
+        this.translocoService.translate('journal.error_connection_detail', {}, this.translationState.activeLanguage())
+      );
     }
   }
 }

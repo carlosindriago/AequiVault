@@ -12,6 +12,10 @@
     "profile": "Perfil",
     "notifications": "Notificaciones"
   },
+  "tenant": {
+    "tenant_a": "Inquilino A: Corporación Alpha",
+    "tenant_b": "Inquilino B: Consultora Omega"
+  },
   "dashboard": {
     "title": "Panel de Indicadores Financieros",
     "liquidity_account": "Cuenta de Liquidez",
@@ -126,6 +130,21 @@
     "balanced_title": "Asiento Balanceado",
     "balanced_desc": "La partida doble se cumple perfectamente. Listo para asentar.",
     "unbalanced_title": "Asiento Desbalanceado",
-    "unbalanced_desc": "El Debe y el Haber no coinciden. La diferencia debe ser 0.00 para asentar en firme."
+    "unbalanced_desc": "El Debe y el Haber no coinciden. La diferencia debe ser 0.00 para asentar en firme.",
+    "options_title": "Opciones del Asiento y Metadatos (Estado, Divisa, Número)",
+    "transaction_date": "Fecha de Transacción",
+    "totals": "Totales",
+    "status_label": "Estado",
+    "status_balanced_short": "Cuadrado",
+    "status_unbalanced_short": "Descuadrado",
+    "reset_form": "Limpiar Formulario",
+    "post_entry": "Postear Asiento Diario",
+    "processing": "Procesando...",
+    "success_title": "Asiento Registrado Exitosamente",
+    "success_detail": "El asiento contable de tipo {status} fue persistido en AequiVault. ID asignado: {id}",
+    "error_accounts_title": "Error al cargar cuentas",
+    "error_accounts_detail": "No se pudieron recuperar las cuentas de mayor debido a restricciones RLS o de red.",
+    "error_connection_title": "Falla en la Conexión",
+    "error_connection_detail": "No se pudo conectar con la API de AequiVault. Asegúrese de que el backend esté ejecutándose en el puerto 8080."
   }
 }
