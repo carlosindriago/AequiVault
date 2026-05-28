@@ -1,9 +1,13 @@
-# 🏛️ AequiVault
+# 🏛️ AequiVault: Motor API-First de Partida Doble
 
-<div align="center">
-  <h3>Enterprise-Grade Double-Entry Accounting Engine & API</h3>
-  <p>Construido con <b>Java 21</b>, <b>Spring Boot 3.3</b>, <b>PostgreSQL (LTREE & RLS)</b> y <b>Angular 18</b>.</p>
-</div>
+[![Java](https://img.shields.io/badge/Java-21-orange.svg?style=flat-square&logo=openjdk)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3-brightgreen.svg?style=flat-square&logo=springboot)](https://spring.io/projects/spring-boot)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg?style=flat-square&logo=postgresql)](https://www.postgresql.org/)
+[![Angular](https://img.shields.io/badge/Angular-18-red.svg?style=flat-square&logo=angular)](https://angular.dev/)
+[![Liquibase](https://img.shields.io/badge/Liquibase-Checked-blueviolet.svg?style=flat-square&logo=liquibase)](https://www.liquibase.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+
+**AequiVault** es un motor de contabilidad de partida doble B2B de grado empresarial, diseñado bajo una arquitectura API-first y un modelo *Open Core*. Resuelve la complejidad de integrar lógica financiera e inmutable en plataformas SaaS de manera descentralizada sin recurrir a costosos y lentos sistemas ERP monolíticos. Garantiza que todas las transacciones sean balanceadas y auditables bajo la conformidad SOX, aislando físicamente los datos por inquilino mediante políticas criptográficas en el motor relacional.
 
 ---
 
@@ -21,85 +25,85 @@
 
 ---
 
-## 📖 Visión General
-**AequiVault** es un motor de libro mayor API-first, liviano, transaccional y multi-inquilino. Diseñado como el *"Stripe para la Contabilidad"*, resuelve el problema de integrar lógica financiera B2B compleja en plataformas SaaS sin depender de monolitos ERP tradicionales. 
+## 🏗️ Arquitectura y Decisiones de Diseño (The Flex)
 
-Garantiza que las cuentas estén siempre balanceadas, sean inmutables y estén listas para estrictas auditorías SOX.
+Este proyecto ejemplifica buenas prácticas de ingeniería de software a gran escala y diseño de sistemas distribuidos:
 
-## ✨ Características Principales (The Flex)
+### 🔒 Inmutabilidad en el Dominio (Clean Architecture & CQRS)
+*   La partida doble es un invariante sagrado. Los asientos contables definitivos (`POSTED`) no permiten modificaciones (`UPDATES`) ni borrados (`DELETES`). Cualquier corrección financiera requiere un contra-asiento de reversión.
+*   El núcleo del negocio está modelado en Java puro sin dependencias de frameworks externos (Clean Architecture).
+*   Se implementa un patrón **CQRS Pragmático**: las escrituras validan reglas de negocio complejas en el dominio, mientras que las consultas (Dashboard, Reportes) se realizan sobre proyecciones optimizadas para evitar la presión sobre el Garbage Collector de Java 21.
 
-* 🔒 **Libro Mayor Inmutable (Insert-Only Ledger):** La partida doble es sagrada. Asientos definitivos (`POSTED`) no permiten `UPDATES` ni `DELETES`. Cualquier corrección exige un asiento de reversión (Contra-asiento).
-* ⚡ **CQRS Pragmático & Clean Architecture:** Separación estricta. Validaciones de dominio en Java puro (sin frameworks) para escrituras. Proyecciones planas de Spring Data para lecturas ultra-rápidas, mitigando la presión del Garbage Collector en Java 21.
-* 🌳 **Jerarquías de Alta Velocidad (PostgreSQL `LTREE`):** El Plan de Cuentas (COA) evita las lentas consultas recursivas de SQL. Utiliza índices GIST y el tipo nativo `LTREE` para consolidar balances de ramas enteras en milisegundos.
-* 🛡️ **Aislamiento Físico Multi-Tenant (RLS):** La separación de inquilinos **no** depende de filtros frágiles en el ORM. Se inyecta la variable de sesión en el ciclo transaccional de Spring Boot, dejando que PostgreSQL aplique **Row-Level Security** nativa. Fugas de datos imposibles a nivel motor.
-* 🎨 **Frontend B2B Premium (Angular 18):** Interfaz fluida basada íntegramente en **Signals** (estado inmutable y reactividad sin RxJS) y patrón *Smart/Dumb components*. Formularios que calculan desbalances contables en tiempo real y renderizan árboles financieros recursivos en el cliente en complejidad $O(N)$.
+### 🌳 Catálogo Jerárquico de Alta Velocidad (PostgreSQL `LTREE`)
+*   Para evitar costosas consultas recursivas recursivas tipo `WITH RECURSIVE` a nivel SQL, el Plan de Cuentas (COA) se almacena utilizando el tipo nativo **`LTREE`** de PostgreSQL e índices **GiST**. Esto permite consolidar e identificar saldos de ramas enteras en complejidad constante $O(1)$ a nivel de aplicación.
 
----
+### 📊 Saldo Continuo y Trial Balance ($O(1)$ en JVM)
+*   Los reportes del Libro Mayor (General Ledger) con saldo continuo (*Running Balance*) y de Sumas y Saldos (Trial Balance) se delegan en PostgreSQL mediante **funciones de ventana** (`SUM() OVER(...)`) y agregaciones acumulativas. Esto elimina la necesidad de extraer miles de registros a memoria de la JVM, garantizando un rendimiento óptimo de carga constante.
 
-## 🛠️ Stack Tecnológico
+### 🛡️ Aislamiento Criptográfico Multi-Tenant (PostgreSQL RLS)
+*   La seguridad lógica multi-inquilino **no** se confía a interceptores de nivel ORM (como Hibernate `@Filter`), los cuales son propensos a fugas de datos involuntarias.
+*   En su lugar, el backend descodifica el token **JWT** (generado criptográficamente con JJWT 0.12.6 en el login del usuario) para extraer de manera confiable su `tenantId`.
+*   Este ID es propagado al hilo transaccional y se inyecta directamente como una variable de sesión en la conexión JDBC de PostgreSQL. El motor de base de datos aplica políticas nativas de **Row-Level Security (RLS)**, aislando físicamente los datos contables en cada consulta.
+*   Toda la gestión transaccional está protegida contra fugas de hilos (`ThreadLocal Leakage`) en el connection pool mediante bloques `try-finally` estrictos.
 
-### Backend (El Cerebro)
-* **Java 21 LTS** + **Spring Boot 3.3.x**
-* **Spring Data JPA** + **MapStruct** (Mapeos eficientes)
-* **PostgreSQL 16** (RLS, LTREE, Transaccionalidad ACID)
-* **Liquibase** (Gestión versionada de esquemas)
-* **JUnit 5 + Testcontainers** (TDD en integración)
-
-### Frontend (La Vidriera)
-* **Angular 18** (Standalone Components, Signals, Control Flow nativo)
-* **Tailwind CSS** (Glassmorphism, UI B2B Premium)
-* **Karma/Jasmine** (Unit Testing al 100% de cobertura)
+### 🚀 Patrón First-Time Setup Bootstrapping
+*   El sistema cuenta con un flujo seguro de inicialización inicial. Si la base de datos está vacía, el backend bloquea toda la API pública excepto el endpoint de inicialización para crear el primer inquilino administrativo y su usuario `SUPER_ADMIN`. Las inicializaciones duplicadas están bloqueadas y arrojan errores semánticos HTTP 422 de manera determinista.
 
 ---
 
-## 🚀 Quick Start (Despliegue Local)
+## 🎨 Frontend Moderno (Angular 18)
 
-Levantar AequiVault en tu máquina toma menos de 2 minutos.
+La interfaz de usuario de AequiVault ha sido diseñada bajo estrictos estándares corporativos de rendimiento y usabilidad:
+
+*   **Signals & Reactividad Síncrona:** El estado local y los desbalances de los formularios contables se gestionan con Signals nativas de Angular 18, reduciendo el abuso de observables asíncronos (RxJS) al mínimo y logrando ciclos de renderizado altamente eficientes.
+*   **Standalone Components:** Arquitectura modular de componentes independientes libre de declaraciones pesadas de módulos.
+*   **Internacionalización (i18n):** Traducción dinámica en tiempo de ejecución con **Transloco**, cargando los archivos diccionarios JSON de inglés y español de forma diferida (*lazy loading*) para evitar el bloqueo del renderizado inicial.
+*   **UI Premium en Modo Oscuro:** Estilizado minimalista premium mediante *Glassmorphism*, bordes suaves, degradados reactivos e interactividad detallada con transiciones sutiles.
+
+---
+
+## 🚀 Guía de Inicio Rápido (Quick Start)
 
 ### Prerrequisitos
-* [Docker](https://www.docker.com/) y Docker Compose
-* [Java 21](https://adoptium.net/)
-* [Node.js 20+](https://nodejs.org/)
+*   [Docker](https://www.docker.com/) y Docker Compose
+*   [Java 21 JDK](https://adoptium.net/)
+*   [Node.js v20+](https://nodejs.org/)
 
-### 1. Levantar la Infraestructura (PostgreSQL)
+### 1. Levantar la Base de Datos (PostgreSQL 16)
+Desde la carpeta raíz del proyecto, inicializa el contenedor Docker de PostgreSQL:
 ```bash
 docker compose up -d
 ```
+*(PostgreSQL se iniciará en el puerto local `5433`)*
 
-*(Esto levanta Postgres 16 en el puerto `5433`)*
-
-### 2. Compilar e Iniciar el Backend
-
+### 2. Compilar e Iniciar el Backend (Spring Boot)
+Navega al directorio de backend, compila y levanta la aplicación:
 ```bash
-cd backend
+cd aequivault/backend
 ./mvnw clean install
 ./mvnw spring-boot:run
 ```
+*(El backend se levantará en `http://localhost:8080`. Liquibase ejecutará automáticamente todas las migraciones del esquema y los privilegios RBAC).*
 
-*(El backend correrá en `http://localhost:8080`. Liquibase ejecutará las migraciones y configurará RLS y LTREE automáticamente).*
-
-### 3. Iniciar el Frontend B2B
-
+### 3. Iniciar el Frontend (Angular)
+Navega a la carpeta de frontend e inicia el servidor de desarrollo:
 ```bash
-cd frontend
+cd aequivault/frontend
 npm install
 npm run start
 ```
+*(El portal B2B estará disponible en `http://localhost:4200`)*
 
-*(El portal B2B estará disponible en `http://localhost:4200`).*
+Al ingresar por primera vez, el sistema detectará el estado virgen de la base de datos y redirigirá al Wizard de Inicialización en `/setup` para crear la empresa administrativa inicial.
 
 ---
 
-## 📚 Documentación de Arquitectura
-
-Para un buceo profundo en las decisiones de diseño, tradeoffs estructurales, y el rigor del TDD aplicado, revisa nuestra carpeta de documentos de arquitectura:
-
-1. [📜 Reglas de Negocio e Invariantes](docs/rules.md)
-2. [🗺️ Plan Estratégico y Arquitectura Senior](docs/plan_proyecto_senior.md)
-3. [✅ Walkthrough de Implementación (Hitos 1, 2 y 3)](docs/walkthrough.md)
+## 📚 Documentación Adicional
+1.  [📜 Reglas de Negocio Contables](docs/rules.md)
+2.  [🗺️ Plan del Proyecto y Arquitectura](docs/plan_proyecto_senior.md)
+3.  [✅ Walkthrough de Implementación de Hitos](docs/walkthrough.md)
 
 ---
 
 ## ⚖️ Licencia
-
-Este proyecto es de código abierto y está disponible bajo la **[Licencia MIT](LICENSE)**. Siéntete libre de clonarlo, romperlo, estudiarlo o usarlo como base para tus propios sistemas transaccionales B2B.
+Este proyecto está distribuido bajo la **[Licencia MIT](LICENSE)**. Siéntete libre de utilizarlo, modificarlo o usarlo como base para tus propias arquitecturas multi-tenant transaccionales.
