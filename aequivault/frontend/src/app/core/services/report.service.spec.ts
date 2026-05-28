@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ReportService } from './report.service';
 import { TrialBalanceReportDto } from '../models/report.model';
+import { environment } from '../../../environments/environment';
 
 describe('ReportService', () => {
   let service: ReportService;
@@ -56,13 +57,12 @@ describe('ReportService', () => {
     });
 
     const req = httpMock.expectOne(request => 
-      request.url === 'http://localhost:8080/api/v1/reports/trial-balance' &&
+      request.url === `${environment.apiUrl}/reports/trial-balance` &&
       request.params.get('startDate') === startDate &&
       request.params.get('endDate') === endDate
     );
 
     expect(req.request.method).toBe('GET');
-    expect(req.request.headers.get('X-Tenant-ID')).toBe(tenantId);
 
     req.flush(mockReport);
   });

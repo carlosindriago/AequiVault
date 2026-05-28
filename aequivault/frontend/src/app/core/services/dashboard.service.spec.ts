@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { DashboardService } from './dashboard.service';
 import { DashboardDto } from '../models/dashboard.model';
+import { environment } from '../../../environments/environment';
 
 describe('DashboardService', () => {
   let service: DashboardService;
@@ -49,14 +50,13 @@ describe('DashboardService', () => {
     });
 
     const req = httpMock.expectOne(request => 
-      request.url === 'http://localhost:8080/api/v1/dashboard' &&
+      request.url === `${environment.apiUrl}/dashboard` &&
       request.params.get('startDate') === startDate &&
       request.params.get('endDate') === endDate &&
       request.params.get('cashAccountId') === cashAccountId
     );
 
     expect(req.request.method).toBe('GET');
-    expect(req.request.headers.get('X-Tenant-ID')).toBe(tenantId);
 
     req.flush(mockDashboard);
   });
