@@ -1,6 +1,8 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
 import { JournalEntryStateService } from '../../../core/services/journal-entry-state.service';
 import { AccountService } from '../../../core/services/account.service';
 import { JournalService } from '../../../core/services/journal.service';
@@ -179,7 +181,7 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
             </button>
 
             <!-- User Profile drop info -->
-            <div class="user-profile">
+            <div class="user-profile" (click)="toggleProfileMenu()">
               <div class="avatar-container">
                 <svg class="avatar-svg" viewBox="0 0 32 32">
                   <defs>
@@ -193,28 +195,36 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
                 </svg>
               </div>
               <div class="user-info">
-                <span class="user-name">Alex R.</span>
-                <span class="user-org">AequiVault</span>
+                <span class="user-name">{{ userName() }}</span>
+                <span class="user-org">{{ tenantName() }}</span>
               </div>
               <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
+
+              <!-- Profile Dropdown -->
+              @if (isProfileMenuOpen()) {
+                <div class="profile-dropdown glass-panel">
+                  <button type="button" class="dropdown-item logout-item" (click)="onLogout($event)">
+                    <svg class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                      <polyline points="16 17 21 12 16 7"></polyline>
+                      <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Logout / Cerrar Sesión
+                  </button>
+                </div>
+              }
             </div>
           </div>
         </header>
 
-        <!-- Glowing Tenant context selector row -->
+        <!-- Glowing Tenant context display pill -->
         <div class="tenant-section">
-          <div class="tenant-dropdown-container">
-            <select class="tenant-select" [ngModel]="activeTenantId()" (ngModelChange)="onTenantChange($event)">
-              <option value="212f7927-ed0d-495c-b39b-94364d5e2f9b">{{ t('tenant.tenant_a') }}</option>
-              <option value="5ace6e00-1995-4012-a708-c8d45f6f4ff8">{{ t('tenant.tenant_b') }}</option>
-            </select>
-            <span class="tenant-arrow">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </span>
+          <div class="tenant-badge">
+            <span class="tenant-icon">🏢</span>
+            <span class="tenant-name-label">{{ tenantName() }}</span>
+            <span class="tenant-id-pill">{{ activeTenantId().substring(0, 8) }}...</span>
           </div>
         </div>
 
@@ -569,6 +579,7 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
       border-radius: 50%;
     }
     .user-profile {
+      position: relative;
       display: flex;
       align-items: center;
       gap: 0.75rem;
@@ -582,6 +593,47 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
     .user-profile:hover {
       border-color: rgba(255, 255, 255, 0.1);
       background: rgba(15, 23, 42, 0.6);
+    }
+    .profile-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 200px;
+      background: rgba(9, 12, 21, 0.95);
+      border: 1.5px solid var(--border-glass);
+      border-radius: 10px;
+      padding: 0.5rem;
+      box-shadow: var(--shadow-premium);
+      z-index: 100;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 0.6rem 0.85rem;
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.85rem;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      text-align: left;
+    }
+    .dropdown-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #f8fafc;
+    }
+    .logout-item:hover {
+      background: rgba(239, 68, 68, 0.1);
+      color: #fca5a5;
+    }
+    .logout-icon {
+      width: 16px;
+      height: 16px;
     }
     .avatar-container {
       width: 32px;
@@ -620,43 +672,38 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
       justify-content: flex-end;
       margin-bottom: 2rem;
     }
-    .tenant-dropdown-container {
-      position: relative;
-      width: 260px;
-    }
-    .tenant-select {
-      width: 100%;
-      padding: 0.65rem 2.5rem 0.65rem 1rem;
-      background: rgba(15, 23, 42, 0.5);
+    .tenant-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(15, 23, 42, 0.6);
       border: 1.5px solid rgba(16, 185, 129, 0.4);
+      padding: 0.5rem 1rem;
       border-radius: 20px;
       color: #e2e8f0;
       font-size: 0.85rem;
       font-weight: 500;
-      outline: none;
-      appearance: none;
-      cursor: pointer;
       box-shadow: 0 0 12px rgba(16, 185, 129, 0.08);
       transition: var(--transition-smooth);
-      font-family: var(--font-family);
     }
-    .tenant-select:focus, .tenant-select:hover {
+    .tenant-badge:hover {
       border-color: #10b981;
       box-shadow: 0 0 16px rgba(16, 185, 129, 0.15);
     }
-    .tenant-arrow {
-      position: absolute;
-      right: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      pointer-events: none;
-      display: flex;
-      align-items: center;
+    .tenant-icon {
+      font-size: 1rem;
     }
-    .tenant-arrow svg {
-      width: 16px;
-      height: 16px;
-      color: #10b981;
+    .tenant-name-label {
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .tenant-id-pill {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      padding: 0.15rem 0.5rem;
+      border-radius: 12px;
+      font-family: monospace;
+      font-size: 0.75rem;
     }
 
     /* Core Journal Card */
@@ -901,11 +948,31 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
   `]
 })
 export class JournalEntryContainerComponent implements OnInit {
+  private authService = inject(AuthService);
+  private router = inject(Router);
+
   // Signals
-  activeTenantId = signal<string>('212f7927-ed0d-495c-b39b-94364d5e2f9b');
+  activeTenantId = signal<string>(this.authService.currentUser()?.tenantId || '');
   accounts = signal<LedgerAccountDto[]>([]);
   isLoading = signal<boolean>(false);
   activeTab = signal<'dashboard' | 'ledger' | 'entry' | 'coa' | 'reports' | 'settings'>('dashboard');
+  isProfileMenuOpen = signal<boolean>(false);
+
+  userName = computed(() => {
+    const email = this.authService.currentUser()?.email || '';
+    if (!email) return 'User';
+    const namePart = email.split('@')[0];
+    return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+  });
+
+  tenantName = computed(() => {
+    const email = this.authService.currentUser()?.email || '';
+    if (!email) return 'AequiVault';
+    const domainPart = email.split('@')[1];
+    if (!domainPart) return 'AequiVault Tenant';
+    const company = domainPart.split('.')[0];
+    return company.charAt(0).toUpperCase() + company.slice(1);
+  });
   
   displayDate = computed(() => {
     const rawDate = this.state.date();
@@ -937,6 +1004,16 @@ export class JournalEntryContainerComponent implements OnInit {
 
   ngOnInit() {
     this.fetchAccounts();
+  }
+
+  toggleProfileMenu() {
+    this.isProfileMenuOpen.update(val => !val);
+  }
+
+  onLogout(event: Event) {
+    event.stopPropagation();
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 
   onTenantChange(newTenantId: string) {

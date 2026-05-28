@@ -2,6 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JournalEntryContainerComponent } from './journal-entry-container.component';
 import { AccountService } from '../../../core/services/account.service';
 import { JournalService } from '../../../core/services/journal.service';
+import { Router } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
+import { signal } from '@angular/core';
 import { JournalEntryStateService } from '../../../core/services/journal-entry-state.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { TranslationStateService } from '../../../core/services/translation-state.service';
@@ -44,6 +47,15 @@ describe('JournalEntryContainerComponent', () => {
       setLanguage: jasmine.createSpy('setLanguage')
     };
 
+    const mockAuthService = {
+      currentUser: signal({ email: 'admin@corporacionalpha.com', tenantId: '212f7927-ed0d-495c-b39b-94364d5e2f9b' }),
+      logout: jasmine.createSpy('logout')
+    };
+
+    const mockRouter = {
+      navigate: jasmine.createSpy('navigate')
+    };
+
     await TestBed.configureTestingModule({
       imports: [
         JournalEntryContainerComponent,
@@ -70,7 +82,9 @@ describe('JournalEntryContainerComponent', () => {
         { provide: AccountService, useValue: accountServiceSpy },
         { provide: JournalService, useValue: journalServiceSpy },
         { provide: DashboardService, useValue: dashboardServiceSpy },
-        { provide: TranslationStateService, useValue: mockTranslationService }
+        { provide: TranslationStateService, useValue: mockTranslationService },
+        { provide: AuthService, useValue: mockAuthService },
+        { provide: Router, useValue: mockRouter }
       ]
     }).compileComponents();
 
