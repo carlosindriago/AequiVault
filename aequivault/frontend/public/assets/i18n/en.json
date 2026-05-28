@@ -145,6 +145,43 @@
     "error_accounts_title": "Error loading accounts",
     "error_accounts_detail": "Could not retrieve ledger accounts due to network or RLS restrictions.",
     "error_connection_title": "Connection Failure",
-    "error_connection_detail": "Could not connect to AequiVault API. Ensure the backend is running on port 8080."
+    "error_connection_detail": "Ensure the backend is running on port 8080."
+  },
+  "ledger": {
+    "title": "General Ledger",
+    "account": "Ledger Account",
+    "account_label": "Filter by Account",
+    "select_account": "Select a ledger account...",
+    "initial_balance": "Initial Balance",
+    "final_balance": "Final Balance",
+    "date": "Date",
+    "entry_number": "Entry No.",
+    "description": "Concept / Description",
+    "debit": "Debit",
+    "credit": "Credit",
+    "running_balance": "Running Balance",
+    "no_data": "No transactions found for this account in the selected range.",
+    "start_date": "Start Date",
+    "end_date": "End Date",
+    "loading_btn": "Loading...",
+    "refresh_btn": "Refresh",
+    "loading": "Retrieving lines and calculating running balance...",
+    "errors": {
+      "load_accounts": "Error loading account list for the General Ledger.",
+      "load_ledger": "Could not retrieve General Ledger for the specified account."
+    }
+  },
+  "settings": {
+    "title": "System Settings",
+    "language_section": "Internationalization & Language",
+    "language_desc": "Choose your preferred user interface language.",
+    "select_language": "System Language",
+    "tenant_section": "Corporate Tenant Information",
+    "tenant_desc": "Details of the tenant context active in your current session.",
+    "tenant_name": "Entity Name",
+    "theme_section": "UI Preferences (Theme)",
+    "theme_desc": "Configure the visual theme to optimize display and accessibility.",
+    "light_mode": "Light Mode",
+    "dark_mode": "Dark Mode"
   }
 }

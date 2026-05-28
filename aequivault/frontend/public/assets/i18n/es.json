@@ -146,5 +146,42 @@
     "error_accounts_detail": "No se pudieron recuperar las cuentas de mayor debido a restricciones RLS o de red.",
     "error_connection_title": "Falla en la Conexión",
     "error_connection_detail": "No se pudo conectar con la API de AequiVault. Asegúrese de que el backend esté ejecutándose en el puerto 8080."
+  },
+  "ledger": {
+    "title": "Libro Mayor",
+    "account": "Cuenta Contable",
+    "account_label": "Filtrar por Cuenta",
+    "select_account": "Seleccione una cuenta contable...",
+    "initial_balance": "Saldo Inicial",
+    "final_balance": "Saldo Final",
+    "date": "Fecha",
+    "entry_number": "Nº Asiento",
+    "description": "Concepto / Descripción",
+    "debit": "Débito",
+    "credit": "Crédito",
+    "running_balance": "Saldo Acumulado",
+    "no_data": "No hay movimientos registrados para esta cuenta en el rango seleccionado.",
+    "start_date": "Fecha Desde",
+    "end_date": "Fecha Hasta",
+    "loading_btn": "Cargando...",
+    "refresh_btn": "Actualizar",
+    "loading": "Recuperando movimientos y calculando saldo continuo...",
+    "errors": {
+      "load_accounts": "Error al cargar el catálogo de cuentas para el Libro Mayor.",
+      "load_ledger": "No se pudo recuperar el Libro Mayor para la cuenta especificada."
+    }
+  },
+  "settings": {
+    "title": "Configuración del Sistema",
+    "language_section": "Internacionalización y Lenguaje",
+    "language_desc": "Seleccione el idioma predeterminado de la interfaz de usuario.",
+    "select_language": "Idioma del Sistema",
+    "tenant_section": "Datos Corporativos del Inquilino",
+    "tenant_desc": "Detalle del inquilino (tenant) actualmente seleccionado en el sistema.",
+    "tenant_name": "Nombre de la Entidad",
+    "theme_section": "Preferencias de Interfaz (Temas)",
+    "theme_desc": "Configure el tema visual para optimizar la visualización y accesibilidad.",
+    "light_mode": "Modo Claro",
+    "dark_mode": "Modo Oscuro"
   }
 }

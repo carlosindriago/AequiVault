@@ -12,6 +12,8 @@ import { JournalEntryFormComponent } from '../components/journal-entry-form/jour
 import { CoaManagerComponent } from '../coa-manager/coa-manager.component';
 import { ReportContainerComponent } from '../report-container/report-container.component';
 import { DashboardContainerComponent } from '../dashboard-container/dashboard-container.component';
+import { LedgerContainerComponent } from '../ledger-container/ledger-container.component';
+import { SettingsContainerComponent } from '../settings-container/settings-container.component';
 import { TranslationStateService } from '../../../core/services/translation-state.service';
 import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
@@ -27,6 +29,8 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
     CoaManagerComponent,
     ReportContainerComponent,
     DashboardContainerComponent,
+    LedgerContainerComponent,
+    SettingsContainerComponent,
     TranslocoDirective,
     TranslocoPipe
   ],
@@ -65,7 +69,11 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
             {{ t('sidebar.dashboard') }}
           </button>
           
-          <button type="button" class="menu-btn" [class.active]="false" disabled>
+          <button 
+            type="button" 
+            class="menu-btn" 
+            [class.active]="activeTab() === 'ledger'"
+            (click)="activeTab.set('ledger')">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
@@ -113,7 +121,11 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
             {{ t('sidebar.reports') }}
           </button>
 
-          <button type="button" class="menu-btn" [class.active]="false" disabled>
+          <button 
+            type="button" 
+            class="menu-btn" 
+            [class.active]="activeTab() === 'settings'"
+            (click)="activeTab.set('settings')">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="3"></circle>
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -130,12 +142,16 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
             <h2 class="page-title">
               @if (activeTab() === 'entry') {
                 {{ t('header.new_entry') }}
+              } @else if (activeTab() === 'ledger') {
+                {{ t('sidebar.ledger') }}
               } @else if (activeTab() === 'coa') {
                 {{ t('sidebar.coa') }}
               } @else if (activeTab() === 'reports') {
                 {{ t('sidebar.reports') }}
               } @else if (activeTab() === 'dashboard') {
                 {{ t('sidebar.dashboard') }}
+              } @else if (activeTab() === 'settings') {
+                {{ t('sidebar.settings') }}
               }
             </h2>
             <span class="entry-sublabel">{{ state.entryNumber() || 'JE-2024-03-15' }}</span>
@@ -355,6 +371,22 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
               <app-report-container 
                 [tenantId]="activeTenantId()">
               </app-report-container>
+            </div>
+          }
+
+          @if (activeTab() === 'ledger') {
+            <div class="ledger-workspace animate-workspace">
+              <app-ledger-container 
+                [tenantId]="activeTenantId()">
+              </app-ledger-container>
+            </div>
+          }
+
+          @if (activeTab() === 'settings') {
+            <div class="settings-workspace animate-workspace">
+              <app-settings-container 
+                [tenantId]="activeTenantId()">
+              </app-settings-container>
             </div>
           }
         </div>
@@ -873,7 +905,7 @@ export class JournalEntryContainerComponent implements OnInit {
   activeTenantId = signal<string>('212f7927-ed0d-495c-b39b-94364d5e2f9b');
   accounts = signal<LedgerAccountDto[]>([]);
   isLoading = signal<boolean>(false);
-  activeTab = signal<'dashboard' | 'entry' | 'coa' | 'reports'>('dashboard');
+  activeTab = signal<'dashboard' | 'ledger' | 'entry' | 'coa' | 'reports' | 'settings'>('dashboard');
   
   displayDate = computed(() => {
     const rawDate = this.state.date();
