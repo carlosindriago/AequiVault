@@ -1,4 +1,4 @@
-# 🏛️ AequiVault: Motor API-First de Partida Doble
+# 🏛️ AequiVault: API-First Double-Entry Accounting Engine
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg?style=flat-square&logo=openjdk)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3-brightgreen.svg?style=flat-square&logo=springboot)](https://spring.io/projects/spring-boot)
@@ -7,103 +7,109 @@
 [![Liquibase](https://img.shields.io/badge/Liquibase-Checked-blueviolet.svg?style=flat-square&logo=liquibase)](https://www.liquibase.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
-**AequiVault** es un motor de contabilidad de partida doble B2B de grado empresarial, diseñado bajo una arquitectura API-first y un modelo *Open Core*. Resuelve la complejidad de integrar lógica financiera e inmutable en plataformas SaaS de manera descentralizada sin recurrir a costosos y lentos sistemas ERP monolíticos. Garantiza que todas las transacciones sean balanceadas y auditables bajo la conformidad SOX, aislando físicamente los datos por inquilino mediante políticas criptográficas en el motor relacional.
+**AequiVault** is an enterprise-grade B2B double-entry accounting engine designed under an API-first architecture and an *Open Core* model. It resolves the complexity of integrating immutable financial logic into modern SaaS platforms in a decentralized way without relying on expensive, slow, and monolithic ERP systems. It guarantees that all transactions are balanced and auditable under SOX compliance, while physically isolating tenant data using cryptographic session variables at the database layer.
 
 ---
 
-## 📸 Vista del Proyecto (UI Showcase)
+## 📸 UI Showcase
 
 <div align="center">
-  <h3>✍️ Registro de Asiento Contable Diario (Hito 2 - Reactivo con Signals)</h3>
-  <img src="docs/images/aequivault_journal_entry.png" alt="Registro de Asiento Diario" width="750" style="border-radius: 12px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1);" />
+  <h3>✍️ Journal Entry Posting (Reactive with Angular Signals)</h3>
+  <img src="docs/images/aequivault_journal_entry.png" alt="Journal Entry Form" width="750" style="border-radius: 12px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1);" />
   
   <br/><br/>
   
-  <h3>📊 Plan de Cuentas Jerárquico - COA (Hito 3 - Postgres LTREE y Árbol Recursivo)</h3>
-  <img src="docs/images/aequivault_chart_of_accounts.png" alt="Plan de Cuentas Jerárquico" width="750" style="border-radius: 12px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1);" />
+  <h3>🌳 Hierarchical Chart of Accounts - COA (PostgreSQL LTREE & Recursive Tree)</h3>
+  <img src="docs/images/aequivault_chart_of_accounts.png" alt="Hierarchical COA" width="750" style="border-radius: 12px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1);" />
+
+  <br/><br/>
+  
+  <h3>🛠️ Interactive API Documentation (OpenAPI / Swagger UI Showcase)</h3>
+  <img src="docs/images/aequivault_swagger_showcase.png" alt="Swagger UI documentation" width="750" style="border-radius: 12px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1);" />
 </div>
 
 ---
 
-## 🏗️ Arquitectura y Decisiones de Diseño (The Flex)
+## 🏗️ Architecture & Design Decisions (The Flex)
 
-Este proyecto ejemplifica buenas prácticas de ingeniería de software a gran escala y diseño de sistemas distribuidos:
+This project exemplifies best practices in large-scale software engineering and distributed systems design:
 
-### 🔒 Inmutabilidad en el Dominio (Clean Architecture & CQRS)
-*   La partida doble es un invariante sagrado. Los asientos contables definitivos (`POSTED`) no permiten modificaciones (`UPDATES`) ni borrados (`DELETES`). Cualquier corrección financiera requiere un contra-asiento de reversión.
-*   El núcleo del negocio está modelado en Java puro sin dependencias de frameworks externos (Clean Architecture).
-*   Se implementa un patrón **CQRS Pragmático**: las escrituras validan reglas de negocio complejas en el dominio, mientras que las consultas (Dashboard, Reportes) se realizan sobre proyecciones optimizadas para evitar la presión sobre el Garbage Collector de Java 21.
+### 🔒 Domain Immutability (Clean Architecture & CQRS)
+*   Double-entry accounting is a sacred business invariant. Confirmed journal entries (`POSTED`) do not allow modifications (`UPDATES`) or deletions (`DELETES`). Any financial correction must be performed via a reversing journal entry.
+*   The business core is modeled in pure Java without external framework dependencies (Clean Architecture).
+*   A **Pragmatic CQRS** pattern is implemented: writes validate complex business rules in the domain, while reads (Dashboard, Reports) run on optimized projections to bypass JVM Garbage Collector pressure.
 
-### 🌳 Catálogo Jerárquico de Alta Velocidad (PostgreSQL `LTREE`)
-*   Para evitar costosas consultas recursivas recursivas tipo `WITH RECURSIVE` a nivel SQL, el Plan de Cuentas (COA) se almacena utilizando el tipo nativo **`LTREE`** de PostgreSQL e índices **GiST**. Esto permite consolidar e identificar saldos de ramas enteras en complejidad constante $O(1)$ a nivel de aplicación.
+### 🌳 High-Speed Hierarchical COA (PostgreSQL `LTREE`)
+*   To avoid expensive recursive `WITH RECURSIVE` queries at the SQL layer, the Chart of Accounts (COA) is stored using PostgreSQL's native **`LTREE`** type and **GiST** indexing. This allows the system to consolidate balances for entire parent branches in constant $O(1)$ complexity at the application level.
 
-### 📊 Saldo Continuo y Trial Balance ($O(1)$ en JVM)
-*   Los reportes del Libro Mayor (General Ledger) con saldo continuo (*Running Balance*) y de Sumas y Saldos (Trial Balance) se delegan en PostgreSQL mediante **funciones de ventana** (`SUM() OVER(...)`) y agregaciones acumulativas. Esto elimina la necesidad de extraer miles de registros a memoria de la JVM, garantizando un rendimiento óptimo de carga constante.
+### 📊 Continuous Balance & Trial Balance ($O(1)$ JVM Memory)
+*   General Ledger running balances and Trial Balance aggregates are delegated to PostgreSQL using **window functions** (`SUM() OVER(...)`) and cumulative rollups. This eliminates the need to load thousands of records into JVM memory, ensuring constant execution time regardless of database size.
 
-### 🛡️ Aislamiento Criptográfico Multi-Tenant (PostgreSQL RLS)
-*   La seguridad lógica multi-inquilino **no** se confía a interceptores de nivel ORM (como Hibernate `@Filter`), los cuales son propensos a fugas de datos involuntarias.
-*   En su lugar, el backend descodifica el token **JWT** (generado criptográficamente con JJWT 0.12.6 en el login del usuario) para extraer de manera confiable su `tenantId`.
-*   Este ID es propagado al hilo transaccional y se inyecta directamente como una variable de sesión en la conexión JDBC de PostgreSQL. El motor de base de datos aplica políticas nativas de **Row-Level Security (RLS)**, aislando físicamente los datos contables en cada consulta.
-*   Toda la gestión transaccional está protegida contra fugas de hilos (`ThreadLocal Leakage`) en el connection pool mediante bloques `try-finally` estrictos.
+### 🛡️ Cryptographic Multi-Tenant Isolation (PostgreSQL RLS)
+*   Logical multi-tenancy is **not** trusted to ORM-level interceptors (like Hibernate `@Filter`), which are highly prone to accidental data leaks.
+*   Instead, the backend decodes the **JWT** (cryptographically signed using JJWT 0.12.6 during user login) to extract the `tenantId`.
+*   This ID is propagated to the transactional thread and injected directly as a session variable inside the PostgreSQL JDBC connection. The database engine enforces native **Row-Level Security (RLS)**, physically isolating accounting data at the query level.
+*   All connection pool transactions are protected against `ThreadLocal` leaks using strict `try-finally` blocks.
 
-### 🚀 Patrón First-Time Setup Bootstrapping
-*   El sistema cuenta con un flujo seguro de inicialización inicial. Si la base de datos está vacía, el backend bloquea toda la API pública excepto el endpoint de inicialización para crear el primer inquilino administrativo y su usuario `SUPER_ADMIN`. Las inicializaciones duplicadas están bloqueadas y arrojan errores semánticos HTTP 422 de manera determinista.
-
----
-
-## 🎨 Frontend Moderno (Angular 18)
-
-La interfaz de usuario de AequiVault ha sido diseñada bajo estrictos estándares corporativos de rendimiento y usabilidad:
-
-*   **Signals & Reactividad Síncrona:** El estado local y los desbalances de los formularios contables se gestionan con Signals nativas de Angular 18, reduciendo el abuso de observables asíncronos (RxJS) al mínimo y logrando ciclos de renderizado altamente eficientes.
-*   **Standalone Components:** Arquitectura modular de componentes independientes libre de declaraciones pesadas de módulos.
-*   **Internacionalización (i18n):** Traducción dinámica en tiempo de ejecución con **Transloco**, cargando los archivos diccionarios JSON de inglés y español de forma diferida (*lazy loading*) para evitar el bloqueo del renderizado inicial.
-*   **UI Premium en Modo Oscuro:** Estilizado minimalista premium mediante *Glassmorphism*, bordes suaves, degradados reactivos e interactividad detallada con transiciones sutiles.
+### 🚀 First-Time Setup Bootstrapping Pattern
+*   The system has a secure initialization flow. If the database is empty, the backend blocks all public APIs except the setup endpoints to create the first tenant and its corresponding `SUPER_ADMIN` user. Duplicate initializations are blocked and throw deterministic HTTP 422 errors.
 
 ---
 
-## 🚀 Guía de Inicio Rápido (Quick Start)
+## 🎨 Modern Frontend (Angular 18)
 
-### Prerrequisitos
-*   [Docker](https://www.docker.com/) y Docker Compose
+The AequiVault user interface is built under strict corporate standards for performance and design:
+
+*   **Signals & Synchronous Reactivity:** Local UI state and double-entry imbalances are computed using native Angular 18 Signals, reducing asynchronous RxJS overhead and ensuring optimal rendering cycles.
+*   **Standalone Components:** Modular architecture of independent components free of heavy module declarations.
+*   **Internationalization (i18n):** Dynamic runtime translations using **Transloco**, loading English/Spanish JSON dictionaries via lazy loading to prevent initial bundle bloat.
+*   **Dark Mode Premium UI:** Minimalist glassmorphic styling, smooth borders, reactive gradients, and micro-interactions.
+
+---
+
+## 🚀 Quick Start Guide
+
+### Prerequisites
+*   [Docker](https://www.docker.com/) and Docker Compose
 *   [Java 21 JDK](https://adoptium.net/)
 *   [Node.js v20+](https://nodejs.org/)
 
-### 1. Levantar la Base de Datos (PostgreSQL 16)
-Desde la carpeta raíz del proyecto, inicializa el contenedor Docker de PostgreSQL:
+### 1. Spin up the Database (PostgreSQL 16)
+From the project root folder, initialize the PostgreSQL Docker container:
 ```bash
 docker compose up -d
 ```
-*(PostgreSQL se iniciará en el puerto local `5433`)*
+*(PostgreSQL will start on local port `5433`)*
 
-### 2. Compilar e Iniciar el Backend (Spring Boot)
-Navega al directorio de backend, compila y levanta la aplicación:
+### 2. Compile and Start the Backend (Spring Boot)
+Navigate to the backend directory, compile, and start the application:
 ```bash
 cd aequivault/backend
 ./mvnw clean install
 ./mvnw spring-boot:run
 ```
-*(El backend se levantará en `http://localhost:8080`. Liquibase ejecutará automáticamente todas las migraciones del esquema y los privilegios RBAC).*
+*(The backend will start at `http://localhost:8080`. Liquibase will automatically run all schema migrations and setup the RBAC privileges).*
 
-### 3. Iniciar el Frontend (Angular)
-Navega a la carpeta de frontend e inicia el servidor de desarrollo:
+### 3. Start the Frontend (Angular)
+Navigate to the frontend folder and run the development server:
 ```bash
 cd aequivault/frontend
 npm install
 npm run start
 ```
-*(El portal B2B estará disponible en `http://localhost:4200`)*
+*(The B2B portal will be available at `http://localhost:4200`)*
 
-Al ingresar por primera vez, el sistema detectará el estado virgen de la base de datos y redirigirá al Wizard de Inicialización en `/setup` para crear la empresa administrativa inicial.
-
----
-
-## 📚 Documentación Adicional
-1.  [📜 Reglas de Negocio Contables](docs/rules.md)
-2.  [🗺️ Plan del Proyecto y Arquitectura](docs/plan_proyecto_senior.md)
-3.  [✅ Walkthrough de Implementación de Hitos](docs/walkthrough.md)
+On first access, the system will detect the blank database state and redirect you to the Setup Wizard at `/setup` to create the initial administrative entity.
 
 ---
 
-## ⚖️ Licencia
-Este proyecto está distribuido bajo la **[Licencia MIT](LICENSE)**. Siéntete libre de utilizarlo, modificarlo o usarlo como base para tus propias arquitecturas multi-tenant transaccionales.
+## 📚 Additional Documentation
+1.  [📜 Accounting Business Rules](docs/rules.md)
+2.  [🗺️ Project Plan & Architecture](docs/plan_proyecto_senior.md)
+3.  [✅ Implementation Walkthrough](docs/walkthrough.md)
+4.  [🏗️ Architecture Decision Records (ADRs)](docs/adr/adr-001-setup-and-auth.md)
+
+---
+
+## ⚖️ License
+Distributed under the **[MIT License](LICENSE)**. Feel free to use, modify, or extend it as a blueprint for your own multi-tenant transactional architectures.

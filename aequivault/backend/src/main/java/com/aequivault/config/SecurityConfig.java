@@ -50,7 +50,7 @@ public class SecurityConfig {
                 }, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
         } else {
             http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/setup/**", "/api/v1/auth/login").permitAll()
+                .requestMatchers("/api/v1/setup/**", "/api/v1/auth/login", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
