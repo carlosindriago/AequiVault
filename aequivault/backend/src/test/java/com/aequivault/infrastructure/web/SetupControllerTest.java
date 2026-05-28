@@ -43,30 +43,60 @@ class SetupControllerTest {
     @BeforeEach
     void setUp() {
         transactionTemplate = new TransactionTemplate(transactionManager);
+        java.util.List<String> tenantIds = new java.util.ArrayList<>();
+        transactionTemplate.executeWithoutResult(status -> {
+            java.util.List<?> rawIds = entityManager.createNativeQuery("SELECT id FROM tenants").getResultList();
+            for (Object rawId : rawIds) {
+                tenantIds.add(rawId.toString());
+            }
+        });
+
+        for (String tenantIdStr : tenantIds) {
+            com.aequivault.infrastructure.security.TenantContext.setTenantId(tenantIdStr);
+            transactionTemplate.executeWithoutResult(status -> {
+                entityManager.createNativeQuery("DELETE FROM draft_journal_lines").executeUpdate();
+                entityManager.createNativeQuery("DELETE FROM draft_journal_entries").executeUpdate();
+                entityManager.createNativeQuery("DELETE FROM journal_lines").executeUpdate();
+                entityManager.createNativeQuery("DELETE FROM journal_entries").executeUpdate();
+                entityManager.createNativeQuery("DELETE FROM ledger_accounts").executeUpdate();
+                entityManager.createNativeQuery("DELETE FROM account_groups").executeUpdate();
+            });
+            com.aequivault.infrastructure.security.TenantContext.clear();
+        }
+
         transactionTemplate.executeWithoutResult(status -> {
             entityManager.createNativeQuery("DELETE FROM user_roles").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM users").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM journal_lines").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM journal_entries").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM draft_journal_lines").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM draft_journal_entries").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM ledger_accounts").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM account_groups").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM tenants").executeUpdate();
         });
     }
 
     @AfterEach
     void tearDown() {
+        java.util.List<String> tenantIds = new java.util.ArrayList<>();
+        transactionTemplate.executeWithoutResult(status -> {
+            java.util.List<?> rawIds = entityManager.createNativeQuery("SELECT id FROM tenants").getResultList();
+            for (Object rawId : rawIds) {
+                tenantIds.add(rawId.toString());
+            }
+        });
+
+        for (String tenantIdStr : tenantIds) {
+            com.aequivault.infrastructure.security.TenantContext.setTenantId(tenantIdStr);
+            transactionTemplate.executeWithoutResult(status -> {
+                entityManager.createNativeQuery("DELETE FROM draft_journal_lines").executeUpdate();
+                entityManager.createNativeQuery("DELETE FROM draft_journal_entries").executeUpdate();
+                entityManager.createNativeQuery("DELETE FROM journal_lines").executeUpdate();
+                entityManager.createNativeQuery("DELETE FROM journal_entries").executeUpdate();
+                entityManager.createNativeQuery("DELETE FROM ledger_accounts").executeUpdate();
+                entityManager.createNativeQuery("DELETE FROM account_groups").executeUpdate();
+            });
+            com.aequivault.infrastructure.security.TenantContext.clear();
+        }
+
         transactionTemplate.executeWithoutResult(status -> {
             entityManager.createNativeQuery("DELETE FROM user_roles").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM users").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM journal_lines").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM journal_entries").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM draft_journal_lines").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM draft_journal_entries").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM ledger_accounts").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM account_groups").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM tenants").executeUpdate();
         });
     }
