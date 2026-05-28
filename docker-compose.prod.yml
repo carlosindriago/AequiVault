@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: aequivault-prod-db
+    environment:
+      POSTGRES_DB: aequivault
+      POSTGRES_USER: aequivault_user
+      POSTGRES_PASSWORD: aequivault_pass
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - backend-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aequivault_user -d aequivault"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  backend:
+    build:
+      context: ./aequivault/backend
+      dockerfile: Dockerfile
+    container_name: aequivault-prod-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/aequivault?stringtype=unspecified
+      SPRING_DATASOURCE_USERNAME: aequivault_app
+      SPRING_DATASOURCE_PASSWORD: aequivault_app_pass
+      SPRING_LIQUIBASE_USER: aequivault_user
+      SPRING_LIQUIBASE_PASSWORD: aequivault_pass
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend-network
+      - frontend-network
+    restart: always
+
+  frontend:
+    build:
+      context: ./aequivault/frontend
+      dockerfile: Dockerfile
+    container_name: aequivault-prod-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - frontend-network
+    restart: always
+
+networks:
+  backend-network:
+    # Isolated network for database and backend
+    internal: true
+  frontend-network:
+    # Network for Nginx to proxy requests to backend
+
+volumes:
+  db_data:
