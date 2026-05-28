@@ -103,6 +103,30 @@ On first access, the system will detect the blank database state and redirect yo
 
 ---
 
+## 🚀 Production Deployment (Cloud-Native)
+
+AequiVault follows the **12-Factor App** methodology for cloud-native deployments. The production orchestration file `docker-compose.prod.yml` is completely stateless, port-agnostic, and treats the database as an external backing service.
+
+### Design Decisions
+*   **External Backing Services:** The database (`db`) is excluded from the Compose file. In production, you must use a managed database instance (e.g., AWS RDS, GCP Cloud SQL, or a dedicated PostgreSQL cluster) rather than running it inside Docker Compose.
+*   **Port Agnosticism:** No ports are exposed to the host machine. Instead, we use `expose` to declare inner ports (`80` for Nginx frontend and `8080` for Spring Boot backend). A reverse proxy (e.g., Traefik, Nginx Ingress, AWS ALB) must route the external traffic to the frontend service.
+*   **Config via Environment:** All database credentials and connection parameters are injected at runtime via standard environment variables.
+
+### Deploy Command Example
+
+To spin up the production stack, supply the required backing service details as environment variables:
+
+```bash
+SPRING_DATASOURCE_URL="jdbc:postgresql://your-rds-host:5432/aequivault_db?stringtype=unspecified" \
+SPRING_DATASOURCE_USERNAME="aequivault_app" \
+SPRING_DATASOURCE_PASSWORD="prod_secure_app_pass" \
+SPRING_LIQUIBASE_USER="aequivault_admin" \
+SPRING_LIQUIBASE_PASSWORD="prod_secure_admin_pass" \
+docker compose -f docker-compose.prod.yml up --build -d
+```
+
+---
+
 ## 📚 Additional Documentation
 1.  [📜 Accounting Business Rules](docs/rules.md)
 2.  [🗺️ Project Plan & Architecture](docs/plan_proyecto_senior.md)
