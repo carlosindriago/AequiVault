@@ -100,4 +100,79 @@ public interface SpringDataReportRepository extends Repository<JournalEntryEntit
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
+
+    @Query(value = "WITH initial_balance AS (" +
+            "    SELECT COALESCE(SUM(" +
+            "        CASE " +
+            "            WHEN la.type IN ('ASSET', 'EXPENSE') THEN " +
+            "                CASE WHEN jl.type = 'DEBIT' THEN jl.amount ELSE -jl.amount END " +
+            "            ELSE " +
+            "                CASE WHEN jl.type = 'CREDIT' THEN jl.amount ELSE -jl.amount END " +
+            "        END" +
+            "    ), 0) AS value " +
+            "    FROM journal_lines jl " +
+            "    INNER JOIN journal_entries je ON jl.entry_id = je.id " +
+            "    INNER JOIN ledger_accounts la ON jl.ledger_account_id = la.id " +
+            "    WHERE la.id = :accountId " +
+            "      AND je.date < :startDate" +
+            ")," +
+            "ledger_lines AS (" +
+            "    SELECT " +
+            "        je.date AS entry_date, " +
+            "        je.id AS entry_id, " +
+            "        je.entry_number AS entry_number, " +
+            "        je.description AS entry_description, " +
+            "        jl.id AS line_id, " +
+            "        CASE WHEN jl.type = 'DEBIT' THEN jl.amount ELSE 0 END AS debit, " +
+            "        CASE WHEN jl.type = 'CREDIT' THEN jl.amount ELSE 0 END AS credit, " +
+            "        CASE " +
+            "            WHEN la.type IN ('ASSET', 'EXPENSE') THEN " +
+            "                CASE WHEN jl.type = 'DEBIT' THEN jl.amount ELSE -jl.amount END " +
+            "            ELSE " +
+            "                CASE WHEN jl.type = 'CREDIT' THEN jl.amount ELSE -jl.amount END " +
+            "        END AS net_change, " +
+            "        je.created_at AS entry_created_at " +
+            "    FROM journal_lines jl " +
+            "    INNER JOIN journal_entries je ON jl.entry_id = je.id " +
+            "    INNER JOIN ledger_accounts la ON jl.ledger_account_id = la.id " +
+            "    WHERE la.id = :accountId " +
+            "      AND je.date BETWEEN :startDate AND :endDate" +
+            ")" +
+            "SELECT " +
+            "    ll.entry_date AS date, " +
+            "    ll.entry_id AS entryId, " +
+            "    ll.entry_number AS entryNumber, " +
+            "    ll.entry_description AS description, " +
+            "    ll.debit AS debit, " +
+            "    ll.credit AS credit, " +
+            "    (SELECT value FROM initial_balance) + " +
+            "    SUM(ll.net_change) OVER (" +
+            "        ORDER BY ll.entry_date, ll.entry_created_at, ll.line_id" +
+            "    ) AS runningBalance " +
+            "FROM ledger_lines ll " +
+            "ORDER BY ll.entry_date, ll.entry_created_at, ll.line_id", nativeQuery = true)
+    List<LedgerLineProjection> getLedgerLines(
+            @Param("accountId") UUID accountId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query(value = "SELECT COALESCE(SUM(" +
+            "    CASE " +
+            "        WHEN la.type IN ('ASSET', 'EXPENSE') THEN " +
+            "            CASE WHEN jl.type = 'DEBIT' THEN jl.amount ELSE -jl.amount END " +
+            "        ELSE " +
+            "            CASE WHEN jl.type = 'CREDIT' THEN jl.amount ELSE -jl.amount END " +
+            "    END" +
+            "), 0) " +
+            "FROM journal_lines jl " +
+            "INNER JOIN journal_entries je ON jl.entry_id = je.id " +
+            "INNER JOIN ledger_accounts la ON jl.ledger_account_id = la.id " +
+            "WHERE la.id = :accountId " +
+            "  AND je.date < :startDate", nativeQuery = true)
+    BigDecimal getInitialBalance(
+            @Param("accountId") UUID accountId,
+            @Param("startDate") LocalDate startDate
+    );
 }
+
