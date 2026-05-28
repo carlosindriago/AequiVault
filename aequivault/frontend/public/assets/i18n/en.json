@@ -39,6 +39,8 @@
   },
   "reports": {
     "trial_balance": "Trial Balance",
+    "balance_sheet": "Balance Sheet",
+    "profit_and_loss": "Profit & Loss",
     "processing": "Processing...",
     "generate_report": "Generate Report",
     "loading": "Calculating consolidated balance...",
@@ -53,8 +55,14 @@
     "status": "Status",
     "balanced": "Balanced",
     "unbalanced": "Unbalanced",
+    "balance_status": "Balance Status",
+    "balanced_sheet": "Balanced (Assets = Liabilities + Equity)",
+    "unbalanced_sheet": "Unbalanced (Assets != Liabilities + Equity)",
+    "revenues": "Revenues",
+    "expenses": "Expenses",
+    "net_income": "Net Income",
     "errors": {
-      "load_report": "Could not generate trial balance. Please verify filters."
+      "load_report": "Could not generate report. Please verify filters."
     }
   },
   "coa": {

@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReportContainerComponent } from './report-container.component';
 import { ReportService } from '../../../core/services/report.service';
 import { of, throwError } from 'rxjs';
-import { TrialBalanceReportDto } from '../../../core/models/report.model';
+import { TrialBalanceReportDto, FinancialReportDto } from '../../../core/models/report.model';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 
 describe('ReportContainerComponent', () => {
@@ -28,9 +28,36 @@ describe('ReportContainerComponent', () => {
     totalCreditSum: 0
   };
 
+  const mockFinancialReport: FinancialReportDto = {
+    startDate: '2026-01-01',
+    endDate: '2026-12-31',
+    lines: [
+      {
+        code: '1',
+        name: 'Activos',
+        balance: 100,
+        depth: 1,
+        isGroup: true
+      },
+      {
+        code: '1.01',
+        name: 'Caja',
+        balance: 100,
+        depth: 2,
+        isGroup: false
+      }
+    ]
+  };
+
   beforeEach(async () => {
-    mockReportService = jasmine.createSpyObj<ReportService>('ReportService', ['getTrialBalance']);
+    mockReportService = jasmine.createSpyObj<ReportService>('ReportService', [
+      'getTrialBalance',
+      'getBalanceSheet',
+      'getProfitAndLoss'
+    ]);
     mockReportService.getTrialBalance.and.returnValue(of(mockReport));
+    mockReportService.getBalanceSheet.and.returnValue(of(mockFinancialReport));
+    mockReportService.getProfitAndLoss.and.returnValue(of(mockFinancialReport));
 
     await TestBed.configureTestingModule({
       imports: [
@@ -50,7 +77,7 @@ describe('ReportContainerComponent', () => {
     component.tenantId = 'tenant-A';
   });
 
-  it('should create and initialize default dates and fetch report', () => {
+  it('should create and initialize default dates and fetch trial balance by default', () => {
     fixture.detectChanges(); // triggers ngOnInit
 
     expect(component).toBeTruthy();
@@ -59,6 +86,28 @@ describe('ReportContainerComponent', () => {
     expect(component.endDate()).toBe(`${currentYear}-12-31`);
     expect(mockReportService.getTrialBalance).toHaveBeenCalledWith('tenant-A', `${currentYear}-01-01`, `${currentYear}-12-31`);
     expect(component.report()).toEqual(mockReport);
+  });
+
+  it('should fetch balance sheet report when selectedReportType is balance-sheet', () => {
+    fixture.detectChanges(); // init -> trial balance fetched
+    mockReportService.getBalanceSheet.calls.reset();
+
+    component.setReportType('balance-sheet');
+
+    const currentYear = new Date().getFullYear();
+    expect(mockReportService.getBalanceSheet).toHaveBeenCalledWith('tenant-A', `${currentYear}-01-01`, `${currentYear}-12-31`);
+    expect(component.financialReport()).toEqual(mockFinancialReport);
+  });
+
+  it('should fetch P&L report when selectedReportType is pnl', () => {
+    fixture.detectChanges(); // init -> trial balance fetched
+    mockReportService.getProfitAndLoss.calls.reset();
+
+    component.setReportType('pnl');
+
+    const currentYear = new Date().getFullYear();
+    expect(mockReportService.getProfitAndLoss).toHaveBeenCalledWith('tenant-A', `${currentYear}-01-01`, `${currentYear}-12-31`);
+    expect(component.financialReport()).toEqual(mockFinancialReport);
   });
 
   it('should fetch new report when tenantId changes via ngOnChanges', () => {

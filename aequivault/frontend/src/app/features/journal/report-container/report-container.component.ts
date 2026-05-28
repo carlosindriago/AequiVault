@@ -3,17 +3,61 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { ReportService } from '../../../core/services/report.service';
-import { TrialBalanceReportDto } from '../../../core/models/report.model';
+import { TrialBalanceReportDto, FinancialReportDto } from '../../../core/models/report.model';
 import { TrialBalanceTableComponent } from '../components/trial-balance-table/trial-balance-table.component';
+import { BalanceSheetReportComponent } from '../components/balance-sheet-report/balance-sheet-report.component';
+import { PnlReportComponent } from '../components/pnl-report/pnl-report.component';
 
 @Component({
   selector: 'app-report-container',
   standalone: true,
-  imports: [CommonModule, FormsModule, TrialBalanceTableComponent, TranslocoDirective],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    TrialBalanceTableComponent, 
+    BalanceSheetReportComponent,
+    PnlReportComponent,
+    TranslocoDirective
+  ],
   template: `
     <div class="report-card glass-panel" *transloco="let t">
-      <div class="report-header">
-        <h2>{{ t('reports.trial_balance') }}</h2>
+      <div class="report-header-container">
+        <div class="report-header">
+          <h2>
+            @if (selectedReportType() === 'trial-balance') {
+              {{ t('reports.trial_balance') }}
+            } @else if (selectedReportType() === 'balance-sheet') {
+              {{ t('reports.balance_sheet') }}
+            } @else {
+              {{ t('reports.profit_and_loss') }}
+            }
+          </h2>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs-container">
+          <button 
+            type="button"
+            class="tab-btn" 
+            [class.active]="selectedReportType() === 'trial-balance'" 
+            (click)="setReportType('trial-balance')">
+            {{ t('reports.trial_balance') }}
+          </button>
+          <button 
+            type="button"
+            class="tab-btn" 
+            [class.active]="selectedReportType() === 'balance-sheet'" 
+            (click)="setReportType('balance-sheet')">
+            {{ t('reports.balance_sheet') }}
+          </button>
+          <button 
+            type="button"
+            class="tab-btn" 
+            [class.active]="selectedReportType() === 'pnl'" 
+            (click)="setReportType('pnl')">
+            {{ t('reports.profit_and_loss') }}
+          </button>
+        </div>
       </div>
  
       <!-- Filters Section -->
@@ -56,12 +100,24 @@ import { TrialBalanceTableComponent } from '../components/trial-balance-table/tr
         @if (isLoading()) {
           <div class="loading-state">{{ t('reports.loading') }}</div>
         } @else {
-          <app-trial-balance-table
-            [balances]="report()?.balances || []"
-            [totalDebitSum]="report()?.totalDebitSum || 0"
-            [totalCreditSum]="report()?.totalCreditSum || 0"
-            currency="USD">
-          </app-trial-balance-table>
+          @if (selectedReportType() === 'trial-balance') {
+            <app-trial-balance-table
+              [balances]="report()?.balances || []"
+              [totalDebitSum]="report()?.totalDebitSum || 0"
+              [totalCreditSum]="report()?.totalCreditSum || 0"
+              currency="USD">
+            </app-trial-balance-table>
+          } @else if (selectedReportType() === 'balance-sheet') {
+            <app-balance-sheet-report
+              [lines]="financialReport()?.lines || []"
+              currency="USD">
+            </app-balance-sheet-report>
+          } @else {
+            <app-pnl-report
+              [lines]="financialReport()?.lines || []"
+              currency="USD">
+            </app-pnl-report>
+          }
         }
       </div>
     </div>
@@ -77,14 +133,50 @@ import { TrialBalanceTableComponent } from '../components/trial-balance-table/tr
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow-premium);
     }
-    .report-header {
+    .report-header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
     }
     .report-header h2 {
       margin: 0;
       color: #f8fafc;
       font-size: 1.5rem;
       font-weight: 600;
+    }
+
+    /* Tabs Navigation */
+    .tabs-container {
+      display: flex;
+      gap: 0.5rem;
+      background: rgba(15, 23, 42, 0.4);
+      padding: 0.35rem;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .tab-btn {
+      padding: 0.5rem 1.25rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #94a3b8;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+    .tab-btn:hover {
+      color: #f8fafc;
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .tab-btn.active {
+      color: #ffffff;
+      background: linear-gradient(135deg, rgba(167, 139, 250, 0.2) 0%, rgba(99, 102, 241, 0.2) 100%);
+      border: 1px solid rgba(167, 139, 250, 0.3);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
     }
 
     /* Filters bar */
@@ -190,7 +282,11 @@ export class ReportContainerComponent implements OnInit, OnChanges {
 
   startDate = signal<string>('');
   endDate = signal<string>('');
+  selectedReportType = signal<'trial-balance' | 'balance-sheet' | 'pnl'>('trial-balance');
+  
   report = signal<TrialBalanceReportDto | null>(null);
+  financialReport = signal<FinancialReportDto | null>(null);
+  
   isLoading = signal<boolean>(false);
   errorMsg = signal<string>('');
 
@@ -219,6 +315,11 @@ export class ReportContainerComponent implements OnInit, OnChanges {
     this.fetchReport();
   }
 
+  setReportType(type: 'trial-balance' | 'balance-sheet' | 'pnl') {
+    this.selectedReportType.set(type);
+    this.fetchReport();
+  }
+
   fetchReport() {
     if (!this.tenantId || !this.startDate() || !this.endDate()) {
       return;
@@ -227,21 +328,62 @@ export class ReportContainerComponent implements OnInit, OnChanges {
     this.isLoading.set(true);
     this.errorMsg.set('');
 
-    this.reportService.getTrialBalance(this.tenantId, this.startDate(), this.endDate())
-      .subscribe({
-        next: (data) => {
-          this.report.set(data);
-          this.isLoading.set(false);
-        },
-        error: (err) => {
-          this.isLoading.set(false);
-          if (err.error && err.error.detail) {
-            this.errorMsg.set(err.error.detail);
-          } else {
-            this.errorMsg.set('reports.errors.load_report');
+    const reportType = this.selectedReportType();
+
+    if (reportType === 'trial-balance') {
+      this.reportService.getTrialBalance(this.tenantId, this.startDate(), this.endDate())
+        .subscribe({
+          next: (data) => {
+            this.report.set(data);
+            this.financialReport.set(null);
+            this.isLoading.set(false);
+          },
+          error: (err) => {
+            this.isLoading.set(false);
+            if (err.error && err.error.detail) {
+              this.errorMsg.set(err.error.detail);
+            } else {
+              this.errorMsg.set('reports.errors.load_report');
+            }
+            this.report.set(null);
           }
-          this.report.set(null);
-        }
-      });
+        });
+    } else if (reportType === 'balance-sheet') {
+      this.reportService.getBalanceSheet(this.tenantId, this.startDate(), this.endDate())
+        .subscribe({
+          next: (data) => {
+            this.financialReport.set(data);
+            this.report.set(null);
+            this.isLoading.set(false);
+          },
+          error: (err) => {
+            this.isLoading.set(false);
+            if (err.error && err.error.detail) {
+              this.errorMsg.set(err.error.detail);
+            } else {
+              this.errorMsg.set('reports.errors.load_report');
+            }
+            this.financialReport.set(null);
+          }
+        });
+    } else {
+      this.reportService.getProfitAndLoss(this.tenantId, this.startDate(), this.endDate())
+        .subscribe({
+          next: (data) => {
+            this.financialReport.set(data);
+            this.report.set(null);
+            this.isLoading.set(false);
+          },
+          error: (err) => {
+            this.isLoading.set(false);
+            if (err.error && err.error.detail) {
+              this.errorMsg.set(err.error.detail);
+            } else {
+              this.errorMsg.set('reports.errors.load_report');
+            }
+            this.financialReport.set(null);
+          }
+        });
+    }
   }
 }

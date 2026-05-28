@@ -1,5 +1,6 @@
 package com.aequivault.infrastructure.web;
 
+import com.aequivault.domain.model.FinancialReportDto;
 import com.aequivault.domain.model.TrialBalanceReportDto;
 import com.aequivault.domain.repository.ReportRepository;
 import com.aequivault.infrastructure.security.TenantContext;
@@ -34,6 +35,36 @@ public class ReportController {
         UUID tenantId = UUID.fromString(tenantStr);
 
         TrialBalanceReportDto report = reportRepository.generateTrialBalance(tenantId, startDate, endDate);
+        return ResponseEntity.ok(report);
+    }
+
+    @GetMapping("/balance-sheet")
+    public ResponseEntity<FinancialReportDto> getBalanceSheet(
+            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) {
+        String tenantStr = TenantContext.getTenantId();
+        if (tenantStr == null || tenantStr.isBlank()) {
+            throw new IllegalStateException("Tenant context is missing. Please provide X-Tenant-ID header.");
+        }
+        UUID tenantId = UUID.fromString(tenantStr);
+
+        FinancialReportDto report = reportRepository.generateBalanceSheet(tenantId, startDate, endDate);
+        return ResponseEntity.ok(report);
+    }
+
+    @GetMapping("/profit-and-loss")
+    public ResponseEntity<FinancialReportDto> getProfitAndLoss(
+            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) {
+        String tenantStr = TenantContext.getTenantId();
+        if (tenantStr == null || tenantStr.isBlank()) {
+            throw new IllegalStateException("Tenant context is missing. Please provide X-Tenant-ID header.");
+        }
+        UUID tenantId = UUID.fromString(tenantStr);
+
+        FinancialReportDto report = reportRepository.generateProfitAndLoss(tenantId, startDate, endDate);
         return ResponseEntity.ok(report);
     }
 }

@@ -39,6 +39,8 @@
   },
   "reports": {
     "trial_balance": "Balance de Comprobación",
+    "balance_sheet": "Balance General",
+    "profit_and_loss": "Estado de Resultados",
     "processing": "Procesando...",
     "generate_report": "Generar Reporte",
     "loading": "Calculando balance consolidado...",
@@ -53,6 +55,12 @@
     "status": "Estado",
     "balanced": "Cuadrado",
     "unbalanced": "Descuadrado",
+    "balance_status": "Estado de Cuadre",
+    "balanced_sheet": "Balance Cuadrado (Activo = Pasivo + Patrimonio)",
+    "unbalanced_sheet": "Balance Descuadrado (Activo != Pasivo + Patrimonio)",
+    "revenues": "Ingresos",
+    "expenses": "Gastos",
+    "net_income": "Utilidad/Pérdida Neta",
     "errors": {
       "load_report": "No se pudo generar el balance de comprobación. Verifique los filtros."
     }

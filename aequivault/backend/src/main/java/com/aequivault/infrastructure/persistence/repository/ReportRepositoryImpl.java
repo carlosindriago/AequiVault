@@ -2,6 +2,8 @@ package com.aequivault.infrastructure.persistence.repository;
 
 import com.aequivault.domain.model.AccountBalanceDto;
 import com.aequivault.domain.model.DailyBalanceDto;
+import com.aequivault.domain.model.FinancialReportDto;
+import com.aequivault.domain.model.FinancialReportLineDto;
 import com.aequivault.domain.model.LedgerLineDto;
 import com.aequivault.domain.model.LedgerReportDto;
 import com.aequivault.domain.model.TrialBalanceReportDto;
@@ -30,8 +32,6 @@ public class ReportRepositoryImpl implements ReportRepository {
     @Override
     @Transactional(readOnly = true)
     public TrialBalanceReportDto generateTrialBalance(UUID tenantId, LocalDate startDate, LocalDate endDate) {
-        // Nota: La inyección de tenantId en la sesión de PostgreSQL (RLS) se gestiona de forma automática 
-        // a nivel de request/conexión por el interceptor del backend.
         List<TrialBalanceProjection> projections = springDataReportRepository.getTrialBalance(startDate, endDate);
 
         List<AccountBalanceDto> balances = new ArrayList<>();
@@ -119,5 +119,37 @@ public class ReportRepositoryImpl implements ReportRepository {
                 finalBalance,
                 lines
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public FinancialReportDto generateBalanceSheet(UUID tenantId, LocalDate startDate, LocalDate endDate) {
+        List<FinancialReportLineProjection> projections = springDataReportRepository.getBalanceSheet(startDate, endDate);
+        List<FinancialReportLineDto> lines = projections.stream()
+                .map(p -> new FinancialReportLineDto(
+                        p.getCode(),
+                        p.getName(),
+                        p.getBalance() != null ? p.getBalance() : BigDecimal.ZERO,
+                        p.getDepth() != null ? p.getDepth() : 0,
+                        p.getIsGroup() != null ? p.getIsGroup() : false
+                ))
+                .toList();
+        return new FinancialReportDto(startDate, endDate, lines);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public FinancialReportDto generateProfitAndLoss(UUID tenantId, LocalDate startDate, LocalDate endDate) {
+        List<FinancialReportLineProjection> projections = springDataReportRepository.getProfitAndLoss(startDate, endDate);
+        List<FinancialReportLineDto> lines = projections.stream()
+                .map(p -> new FinancialReportLineDto(
+                        p.getCode(),
+                        p.getName(),
+                        p.getBalance() != null ? p.getBalance() : BigDecimal.ZERO,
+                        p.getDepth() != null ? p.getDepth() : 0,
+                        p.getIsGroup() != null ? p.getIsGroup() : false
+                ))
+                .toList();
+        return new FinancialReportDto(startDate, endDate, lines);
     }
 }

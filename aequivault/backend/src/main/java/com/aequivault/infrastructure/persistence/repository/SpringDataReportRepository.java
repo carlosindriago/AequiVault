@@ -174,5 +174,142 @@ public interface SpringDataReportRepository extends Repository<JournalEntryEntit
             @Param("accountId") UUID accountId,
             @Param("startDate") LocalDate startDate
     );
+
+    @Query(value = "WITH RECURSIVE active_groups AS (" +
+            "    SELECT id, code, name, path, tenant_id" +
+            "    FROM account_groups" +
+            "    WHERE path <@ '1' OR path <@ '2' OR path <@ '3'" +
+            ")," +
+            "account_balances AS (" +
+            "    SELECT " +
+            "        la.id AS account_id," +
+            "        la.code AS account_code," +
+            "        la.name AS account_name," +
+            "        la.type AS account_type," +
+            "        la.group_id AS group_id," +
+            "        ag.path AS group_path," +
+            "        COALESCE(SUM(CASE WHEN jl.type = 'DEBIT' THEN jl.amount ELSE 0 END), 0) AS total_debit," +
+            "        COALESCE(SUM(CASE WHEN jl.type = 'CREDIT' THEN jl.amount ELSE 0 END), 0) AS total_credit," +
+            "        COALESCE(SUM(" +
+            "            CASE " +
+            "                WHEN la.type IN ('ASSET', 'EXPENSE') THEN " +
+            "                    CASE WHEN jl.type = 'DEBIT' THEN jl.amount ELSE -jl.amount END " +
+            "                ELSE " +
+            "                    CASE WHEN jl.type = 'CREDIT' THEN jl.amount ELSE -jl.amount END " +
+            "            END" +
+            "        ), 0) AS net_balance" +
+            "    FROM ledger_accounts la" +
+            "    INNER JOIN active_groups ag ON la.group_id = ag.id" +
+            "    INNER JOIN journal_lines jl ON jl.ledger_account_id = la.id" +
+            "    INNER JOIN journal_entries je ON jl.entry_id = je.id" +
+            "    WHERE je.date BETWEEN :startDate AND :endDate" +
+            "    GROUP BY la.id, la.code, la.name, la.type, la.group_id, ag.path" +
+            ")," +
+            "group_balances AS (" +
+            "    SELECT " +
+            "        g.id AS group_id," +
+            "        g.code AS group_code," +
+            "        g.name AS group_name," +
+            "        g.path AS group_path," +
+            "        COALESCE(SUM(ab.net_balance), 0) AS net_balance" +
+            "    FROM active_groups g" +
+            "    INNER JOIN account_balances ab ON ab.group_path <@ g.path" +
+            "    GROUP BY g.id, g.code, g.name, g.path" +
+            ")," +
+            "combined_lines AS (" +
+            "    SELECT " +
+            "        group_code AS code," +
+            "        group_name AS name," +
+            "        net_balance AS balance," +
+            "        nlevel(group_path) AS depth," +
+            "        true AS is_group," +
+            "        group_path::text AS sort_path" +
+            "    FROM group_balances" +
+            "    UNION ALL" +
+            "    SELECT " +
+            "        account_code AS code," +
+            "        account_name AS name," +
+            "        net_balance AS balance," +
+            "        nlevel(group_path) + 1 AS depth," +
+            "        false AS is_group," +
+            "        group_path::text || '.' || account_code AS sort_path" +
+            "    FROM account_balances" +
+            ")" +
+            "SELECT code, name, balance, depth, is_group AS isGroup" +
+            "FROM combined_lines" +
+            "ORDER BY cast(sort_path AS ltree)", nativeQuery = true)
+    List<FinancialReportLineProjection> getBalanceSheet(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query(value = "WITH RECURSIVE active_groups AS (" +
+            "    SELECT id, code, name, path, tenant_id" +
+            "    FROM account_groups" +
+            "    WHERE path <@ '4' OR path <@ '5'" +
+            ")," +
+            "account_balances AS (" +
+            "    SELECT " +
+            "        la.id AS account_id," +
+            "        la.code AS account_code," +
+            "        la.name AS account_name," +
+            "        la.type AS account_type," +
+            "        la.group_id AS group_id," +
+            "        ag.path AS group_path," +
+            "        COALESCE(SUM(CASE WHEN jl.type = 'DEBIT' THEN jl.amount ELSE 0 END), 0) AS total_debit," +
+            "        COALESCE(SUM(CASE WHEN jl.type = 'CREDIT' THEN jl.amount ELSE 0 END), 0) AS total_credit," +
+            "        COALESCE(SUM(" +
+            "            CASE " +
+            "                WHEN la.type IN ('ASSET', 'EXPENSE') THEN " +
+            "                    CASE WHEN jl.type = 'DEBIT' THEN jl.amount ELSE -jl.amount END " +
+            "                ELSE " +
+            "                    CASE WHEN jl.type = 'CREDIT' THEN jl.amount ELSE -jl.amount END " +
+            "            END" +
+            "        ), 0) AS net_balance" +
+            "    FROM ledger_accounts la" +
+            "    INNER JOIN active_groups ag ON la.group_id = ag.id" +
+            "    INNER JOIN journal_lines jl ON jl.ledger_account_id = la.id" +
+            "    INNER JOIN journal_entries je ON jl.entry_id = je.id" +
+            "    WHERE je.date BETWEEN :startDate AND :endDate" +
+            "    GROUP BY la.id, la.code, la.name, la.type, la.group_id, ag.path" +
+            ")," +
+            "group_balances AS (" +
+            "    SELECT " +
+            "        g.id AS group_id," +
+            "        g.code AS group_code," +
+            "        g.name AS group_name," +
+            "        g.path AS group_path," +
+            "        COALESCE(SUM(ab.net_balance), 0) AS net_balance" +
+            "    FROM active_groups g" +
+            "    INNER JOIN account_balances ab ON ab.group_path <@ g.path" +
+            "    GROUP BY g.id, g.code, g.name, g.path" +
+            ")," +
+            "combined_lines AS (" +
+            "    SELECT " +
+            "        group_code AS code," +
+            "        group_name AS name," +
+            "        net_balance AS balance," +
+            "        nlevel(group_path) AS depth," +
+            "        true AS is_group," +
+            "        group_path::text AS sort_path" +
+            "    FROM group_balances" +
+            "    UNION ALL" +
+            "    SELECT " +
+            "        account_code AS code," +
+            "        account_name AS name," +
+            "        net_balance AS balance," +
+            "        nlevel(group_path) + 1 AS depth," +
+            "        false AS is_group," +
+            "        group_path::text || '.' || account_code AS sort_path" +
+            "    FROM account_balances" +
+            ")" +
+            "SELECT code, name, balance, depth, is_group AS isGroup" +
+            "FROM combined_lines" +
+            "ORDER BY cast(sort_path AS ltree)", nativeQuery = true)
+    List<FinancialReportLineProjection> getProfitAndLoss(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 }
+
 

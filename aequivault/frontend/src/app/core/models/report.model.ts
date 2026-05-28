@@ -15,3 +15,17 @@ export interface TrialBalanceReportDto {
   totalDebitSum: number;
   totalCreditSum: number;
 }
+
+export interface FinancialReportLineDto {
+  code: string;
+  name: string;
+  balance: number;
+  depth: number;
+  isGroup: boolean;
+}
+
+export interface FinancialReportDto {
+  startDate: string;
+  endDate: string;
+  lines: FinancialReportLineDto[];
+}
