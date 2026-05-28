@@ -6,6 +6,7 @@ import { DashboardService } from './core/services/dashboard.service';
 import { TranslationStateService } from './core/services/translation-state.service';
 import { JournalEntryStateService } from './core/services/journal-entry-state.service';
 import { TranslocoTestingModule } from '@jsverse/transloco';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
 describe('AppComponent', () => {
@@ -40,6 +41,7 @@ describe('AppComponent', () => {
         })
       ],
       providers: [
+        provideRouter([]),
         JournalEntryStateService,
         { provide: AccountService, useValue: accountServiceSpy },
         { provide: JournalService, useValue: journalServiceSpy },
@@ -61,10 +63,10 @@ describe('AppComponent', () => {
     expect(app.title).toEqual('AequiVault');
   });
 
-  it('should render container component title', () => {
+  it('should render router outlet', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('AequiVault');
+    expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 });
