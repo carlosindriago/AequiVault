@@ -20,10 +20,14 @@ import java.util.stream.Collectors;
 public class JournalEntryController {
 
     private final JournalEntryRepository journalEntryRepository;
+    private final com.aequivault.domain.model.FinancialPeriodService financialPeriodService;
     private final DoubleEntryValidationService validationService = new DoubleEntryValidationService();
 
-    public JournalEntryController(JournalEntryRepository journalEntryRepository) {
+    public JournalEntryController(
+            JournalEntryRepository journalEntryRepository,
+            com.aequivault.domain.model.FinancialPeriodService financialPeriodService) {
         this.journalEntryRepository = journalEntryRepository;
+        this.financialPeriodService = financialPeriodService;
     }
 
     @PostMapping
@@ -33,6 +37,13 @@ public class JournalEntryController {
             throw new IllegalStateException("Tenant context is missing. Please provide X-Tenant-ID header.");
         }
         UUID tenantId = UUID.fromString(tenantStr);
+
+        financialPeriodService.validatePeriodIsOpen(tenantId, request.date());
+        if (request.id() != null) {
+            journalEntryRepository.findById(request.id()).ifPresent(existing -> {
+                financialPeriodService.validatePeriodIsOpen(tenantId, existing.getDate());
+            });
+        }
         UUID entryId = request.id() != null ? request.id() : UUID.randomUUID();
 
         // 1. Crear el objeto de dominio inicial

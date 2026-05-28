@@ -17,19 +17,26 @@ public class JournalEntryRepositoryImpl implements JournalEntryRepository {
     private final SpringDataJournalEntryRepository postedRepository;
     private final SpringDataDraftJournalEntryRepository draftRepository;
     private final JournalEntryMapper mapper;
+    private final com.aequivault.domain.model.FinancialPeriodService financialPeriodService;
 
     public JournalEntryRepositoryImpl(
             SpringDataJournalEntryRepository postedRepository,
             SpringDataDraftJournalEntryRepository draftRepository,
-            JournalEntryMapper mapper) {
+            JournalEntryMapper mapper,
+            com.aequivault.domain.model.FinancialPeriodService financialPeriodService) {
         this.postedRepository = postedRepository;
         this.draftRepository = draftRepository;
         this.mapper = mapper;
+        this.financialPeriodService = financialPeriodService;
     }
 
     @Override
     @Transactional
     public UUID save(JournalEntry domain) {
+        financialPeriodService.validatePeriodIsOpen(domain.getTenantId(), domain.getDate());
+        findById(domain.getId()).ifPresent(existing -> {
+            financialPeriodService.validatePeriodIsOpen(existing.getTenantId(), existing.getDate());
+        });
         if (domain.getStatus() == EntryStatus.POSTED) {
             // 1. Mapear y persistir en la tabla firme
             JournalEntryEntity entity = mapper.toEntity(domain);

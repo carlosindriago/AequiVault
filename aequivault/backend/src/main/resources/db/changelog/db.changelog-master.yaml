@@ -13,5 +13,7 @@ databaseChangeLog:
       file: db/changelog/migrations/006-add-currency-to-entries.sql
   - include:
       file: db/changelog/migrations/007-security-rbac.sql
+  - include:
+      file: db/changelog/migrations/008-financial-periods.sql
 
 

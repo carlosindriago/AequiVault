@@ -124,16 +124,63 @@ public class ReportRepositoryImpl implements ReportRepository {
     @Override
     @Transactional(readOnly = true)
     public FinancialReportDto generateBalanceSheet(UUID tenantId, LocalDate startDate, LocalDate endDate) {
-        List<FinancialReportLineProjection> projections = springDataReportRepository.getBalanceSheet(startDate, endDate);
-        List<FinancialReportLineDto> lines = projections.stream()
-                .map(p -> new FinancialReportLineDto(
-                        p.getCode(),
-                        p.getName(),
-                        p.getBalance() != null ? p.getBalance() : BigDecimal.ZERO,
-                        p.getDepth() != null ? p.getDepth() : 0,
-                        p.getIsGroup() != null ? p.getIsGroup() : false
-                ))
-                .toList();
+        List<FinancialReportLineProjection> bsProjections = springDataReportRepository.getBalanceSheet(startDate, endDate);
+        List<FinancialReportLineProjection> pnlProjections = springDataReportRepository.getProfitAndLoss(startDate, endDate);
+
+        BigDecimal totalRevenues = BigDecimal.ZERO;
+        BigDecimal totalExpenses = BigDecimal.ZERO;
+
+        for (FinancialReportLineProjection p : pnlProjections) {
+            if ("4".equals(p.getCode())) {
+                totalRevenues = p.getBalance() != null ? p.getBalance() : BigDecimal.ZERO;
+            } else if ("5".equals(p.getCode())) {
+                totalExpenses = p.getBalance() != null ? p.getBalance() : BigDecimal.ZERO;
+            }
+        }
+
+        BigDecimal netIncome = totalRevenues.subtract(totalExpenses);
+
+        List<FinancialReportLineDto> lines = new java.util.ArrayList<>();
+        for (FinancialReportLineProjection p : bsProjections) {
+            String code = p.getCode();
+            BigDecimal balance = p.getBalance() != null ? p.getBalance() : BigDecimal.ZERO;
+            Integer depth = p.getDepth() != null ? p.getDepth() : 0;
+            Boolean isGroup = p.getIsGroup() != null ? p.getIsGroup() : false;
+
+            if ("3".equals(code)) {
+                balance = balance.add(netIncome);
+            }
+
+            lines.add(new FinancialReportLineDto(
+                code,
+                p.getName(),
+                balance,
+                depth,
+                isGroup
+            ));
+        }
+
+        FinancialReportLineDto netIncomeLine = new FinancialReportLineDto(
+            "3.99",
+            "Utilidad del Ejercicio",
+            netIncome,
+            2,
+            false
+        );
+
+        int insertIndex = -1;
+        for (int i = 0; i < lines.size(); i++) {
+            if (lines.get(i).code().startsWith("3")) {
+                insertIndex = i;
+            }
+        }
+
+        if (insertIndex != -1) {
+            lines.add(insertIndex + 1, netIncomeLine);
+        } else {
+            lines.add(netIncomeLine);
+        }
+
         return new FinancialReportDto(startDate, endDate, lines);
     }
 
