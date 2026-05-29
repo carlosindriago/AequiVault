@@ -131,7 +131,7 @@ docker compose -f docker-compose.prod.yml up --build -d
 
 ## 📚 Documentação Adicional
 1.  [📜 Regras de Negócios Contábeis](docs/rules.md)
-2.  [🗺️ Plano do Projeto e Arquitetura](docs/plan_proyecto_senior.md)
+2.  [🗺️ Plano do Projeto e Arquitetura](docs/plan_proyecto_contable.md)
 3.  [✅ Guia de Implementação](docs/walkthrough.md)
 4.  [🏗️ Registros de Decisão de Arquitetura (ADRs)](docs/adr/adr-001-setup-and-auth.md)
 
