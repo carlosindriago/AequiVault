@@ -1,76 +1,76 @@
-# AequiVault — Reglas y Estándares de Desarrollo
+# AequiVault — Development Rules and Standards
 
-Este documento establece las reglas técnicas, de diseño y metodológicas obligatorias para el desarrollo de **AequiVault**. Cualquier programador o agente de IA que trabaje en este repositorio debe cumplir estrictamente con estas directrices.
-
----
-
-## 1. Filosofía del Proyecto y Reglas del Negocio (Invariantes)
-
-AequiVault es un sistema de contabilidad de grado financiero transaccional. No se aceptan atajos que comprometan la integridad de los datos.
-
-*   **Partida Doble Estricta**: Todo asiento contable (`JournalEntry`) debe cumplir que:
-    $$\sum Debe (Debit) = \sum Haber (Credit)$$
-    Si la ecuación no cuadra a nivel de centavos, la transacción se rechaza de inmediato en la capa de dominio.
-*   **Inmutabilidad del Libro Diario (Ledger)**: Las tablas `journal_entries` y `journal_lines` son estrictamente **Insert-Only**.
-    *   Queda **prohibido** realizar operaciones `UPDATE` o `DELETE` sobre registros asentados.
-    *   Cualquier corrección de errores debe realizarse mediante un **asiento de ajuste/reversión** contable (Contra-asiento).
-*   **Aislamiento de Borradores (Draft Staging)**: Los borradores contables jamás tocan las tablas del libro mayor. Viven en tablas de staging temporales (`draft_journal_entries` y `draft_journal_lines`) y se mueven de forma atómica a las tablas firmes únicamente al asentarse.
-*   **Precisión Financiera (`Money`)**:
-    *   Queda estrictamente **prohibido** el uso de `double` o `float` para montos monetarios.
-    *   Se debe utilizar el Value Object `Money` (que encapsula `BigDecimal` y `Currency`).
-    *   La matemática interna utiliza una escala de **6 o 8 decimales** para mitigar errores de redondeo acumulado.
-    *   Antes de persistir, los montos se redondean a **4 decimales** en base de datos (`DECIMAL(25,4)`) usando obligatoriamente **Redondeo del Banquero** (`RoundingMode.HALF_EVEN`).
+This document establishes the mandatory technical, architectural, and methodological rules for developing **AequiVault**. Any developer or AI agent working on this repository must strictly comply with these guidelines.
 
 ---
 
-## 2. Arquitectura del Backend (Java 21 + Spring Boot 3.3.x)
+## 1. Project Philosophy and Business Rules (Invariants)
 
-Implementamos un enfoque de **CQRS Lógico** para equilibrar pureza y rendimiento:
+AequiVault is an enterprise-grade transactional accounting engine. No shortcuts that compromise data integrity are accepted.
 
-### Ruta de Escritura (Commands) - Arquitectura Hexagonal Pura
-*   Las clases de dominio (`JournalEntry`, `LedgerAccount`, `Money`) son **Java puro** y no contienen anotaciones de JPA (`@Entity`, `@Table`) ni de Spring.
-*   Las validaciones se ejecutan en las entidades de dominio y servicios del dominio antes de mapear.
-*   Se utiliza **MapStruct** únicamente en la capa de infraestructura para convertir objetos de dominio a entidades JPA (`*Entity`) antes de guardar.
-*   Las invariantes de negocio se testean con JUnit 5 usando TDD estricto sin levantar bases de datos ni Spring Context.
-
-### Ruta de Lectura (Queries) - Proyecciones Directas
-*   Para la generación de reportes (Balance de Comprobación, Balance General, P&L, etc.), **se omite el modelo de dominio**.
-*   Se consulta la base de datos utilizando **proyecciones de Spring Data JPA** directas a DTOs de lectura plana o agregaciones SQL rápidas.
-*   Esto evita la instanciación de objetos del dominio en memoria y el consumo excesivo de CPU/Garbage Collector en Java 21.
-
----
-
-## 3. Base de Datos (PostgreSQL 16+)
-
-Aprovechamos las capacidades nativas del motor relacional para simplificar la lógica de la aplicación y garantizar seguridad física.
-
-*   **Jerarquías con LTREE**:
-    *   El Plan de Cuentas (`account_groups`) no utiliza relaciones autoreferenciadas simples con `parent_id` (Adjacency List).
-    *   Se utiliza la extensión nativa **LTREE** de PostgreSQL para la columna `path`.
-    *   Las consultas jerárquicas y sumatorias consolidadas se realizan con el operador de descendencia (`path <@ 'codigo_raiz'`) apoyadas por índices **GIST** en PostgreSQL.
-*   **Seguridad Multi-inquilino (Row-Level Security - RLS)**:
-    *   El aislamiento de inquilinos (`tenant_id`) se delega y valida físicamente en la base de datos mediante **RLS**.
-    *   En las migraciones de base de datos se activa RLS y se define la política usando la variable de sesión `current_setting('app.current_tenant')`.
-    *   Al inicio de cada transacción, el backend Spring Boot debe ejecutar `SET LOCAL app.current_tenant = :tenantId`.
-    *   **Limpieza de Hilo**: Se debe limpiar de forma garantizada el `ThreadLocal` del tenant ID en un bloque `finally` para evitar fugas de datos entre hilos de ejecución del connection pool (HikariCP).
+*   **Strict Double-Entry**: Every journal entry (`JournalEntry`) must satisfy:
+    $$\sum Debit = \sum Credit$$
+    If the equation does not balance to the penny, the transaction is rejected immediately at the domain layer.
+*   **Ledger Immutability**: The `journal_entries` and `journal_lines` tables are strictly **Insert-Only**.
+    *   It is **prohibited** to perform `UPDATE` or `DELETE` operations on posted records.
+    *   Any correction of errors must be performed via an **adjustment/reversing journal entry** (Contra-entry).
+*   **Draft Staging**: Draft journal entries never touch the general ledger tables. They live in temporary staging tables (`draft_journal_entries` and `draft_journal_lines`) and are moved atomically to the posted tables only upon posting.
+*   **Financial Precision (`Money`)**:
+    *   It is strictly **prohibited** to use `double` or `float` for monetary amounts.
+    *   The `Money` Value Object (encapsulating `BigDecimal` and `Currency`) must be used.
+    *   Internal arithmetic uses a scale of **6 or 8 decimal places** to mitigate accumulated rounding errors.
+    *   Before persisting, amounts are rounded to **4 decimal places** in the database (`DECIMAL(25,4)`) using **Banker's Rounding** (`RoundingMode.HALF_EVEN`).
 
 ---
 
-## 4. Arquitectura del Frontend (Angular 18)
+## 2. Backend Architecture (Java 21 + Spring Boot 3.3.x)
 
-*   **Gestión de Estado**: Uso exclusivo de **Angular Signals** para reactividad y sincronización de estados. Evitar el uso desmedido de RxJS salvo para flujos de datos asíncronos complejos o peticiones HTTP.
-*   **Componentes**: Patrón **Smart/Dumb** (Container/Presentational).
-    *   *Smart Components*: Manejan llamadas a servicios, lógica de negocio y paso de datos.
-    *   *Dumb Components*: Reciben datos mediante `@Input` (o signal-based inputs) y emiten eventos mediante `@Output`. 100% enfocados en UI.
-*   **Estilos**: CSS nativo y Tailwind CSS según corresponda. Cero estilos inline o placeholders visuales genéricos. Toda UI debe sentirse premium, fluida, responsive y moderna.
-*   **Testing**: Asegurar que todos los elementos interactivos clave tengan IDs únicos y descriptivos para facilitar pruebas automatizadas de interfaz.
+We implement a **Logical CQRS** approach to balance domain purity with database performance:
+
+### Command Path (Writes) - Pure Hexagonal Architecture
+*   Domain classes (`JournalEntry`, `LedgerAccount`, `Money`) are **pure Java** and contain no JPA (`@Entity`, `@Table`) or Spring annotations.
+*   Validations are executed in domain entities and domain services before mapping.
+*   **MapStruct** is used only in the infrastructure layer to convert domain objects to JPA entities (`*Entity`) before persisting.
+*   Business invariants are tested with JUnit 5 using strict TDD without booting database or Spring contexts.
+
+### Query Path (Reads) - Direct Projections
+*   For generating reports (Trial Balance, Balance Sheet, P&L, etc.), **the domain model is bypassed**.
+*   The database is queried using **Spring Data JPA projections** mapped directly to flat read DTOs or fast SQL aggregations.
+*   This avoids instantiating heavy domain objects in memory and reduces JVM CPU/Garbage Collector pressure in Java 21.
 
 ---
 
-## 5. Prácticas de Desarrollo y Workflow
+## 3. Database (PostgreSQL 16+)
 
-*   **TDD Estricto**: Escribir los tests unitarios de las reglas de dominio *antes* de implementar la lógica. Los tests deben servir como especificación viva del código.
-*   **Git y Convención de Commits**:
-    *   Seguir la especificación de **Conventional Commits** (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`).
-    *   **Prohibido**: Añadir atribuciones de autoría de Inteligencia Artificial (ej. "Co-Authored-By", "Generated by AI") en los mensajes de commit.
-*   **Sin builds tras cambios**: No ejecutar comandos de empaquetado final (`mvn package`, `npm run build`) durante el desarrollo iterativo ordinario, a menos que sea estrictamente necesario para validar builds en CI/CD.
+We leverage the relational engine's native capabilities to simplify application logic and guarantee physical data safety.
+
+*   **Hierarchies with LTREE**:
+    *   The Chart of Accounts (`account_groups`) does not use simple self-referencing relationships with `parent_id` (Adjacency List).
+    *   PostgreSQL's native **LTREE** extension is used for the `path` column.
+    *   Hierarchical queries and consolidated summations are performed using the path descendant operator (`path <@ 'root_code'`) backed by **GiST** indexes.
+*   **Multi-Tenant Isolation (Row-Level Security - RLS)**:
+    *   Tenant isolation (`tenant_id`) is physically enforced in the database via **RLS**.
+    *   Database migrations enable RLS and define the policy using the session variable `current_setting('app.current_tenant')`.
+    *   At the start of each transaction, the Spring Boot backend must execute `SET LOCAL app.current_tenant = :tenantId`.
+    *   **Thread Cleanup**: The tenant ID `ThreadLocal` must be cleared in a guaranteed `finally` block to prevent data leaks between connection pool threads (HikariCP).
+
+---
+
+## 4. Frontend Architecture (Angular 18)
+
+*   **State Management**: Exclusive use of **Angular Signals** for reactivity and state synchronization. Avoid heavy use of RxJS except for complex asynchronous data flows or HTTP requests.
+*   **Components**: **Smart/Dumb** (Container/Presentational) pattern.
+    *   *Smart Components*: Manage service calls, business logic, and data passing.
+    *   *Dumb Components*: Receive data via `@Input` (or signal-based inputs) and emit events via `@Output`. 100% focused on UI.
+*   **Styling**: Native CSS and Tailwind CSS. No inline styles or generic placeholders. Every UI must feel premium, fluid, responsive, and modern.
+*   **Testing**: Ensure all key interactive elements have unique and descriptive IDs to facilitate automated E2E/UI testing.
+
+---
+
+## 5. Development Practices and Workflow
+
+*   **Strict TDD**: Write unit tests for domain rules *before* implementing the logic. Tests must serve as a living specification of the code.
+*   **Git and Commit Conventions**:
+    *   Follow the **Conventional Commits** specification (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`).
+    *   **Prohibited**: Adding Artificial Intelligence attribution (e.g. "Co-Authored-By", "Generated by AI") in commit messages.
+*   **No builds after changes**: Avoid running production build commands (`mvn package`, `npm run build`) during ordinary iterative development, unless strictly necessary to validate CI/CD pipelines.

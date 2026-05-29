@@ -1,103 +1,103 @@
-# Walkthrough: Capa REST API, Validación, RLS y Frontend Reactivo (Hito 1 y Hito 2)
+# Walkthrough: REST API Layer, Validation, RLS, and Reactive Frontend (Milestones 1, 2, and 3)
 
-Este documento resume la implementación completa y la validación de la arquitectura de AequiVault, cubriendo tanto la API transaccional multi-inquilino (Hito 1) como la Interfaz Gráfica Reactiva en Angular 18 (Hito 2).
-
----
-
-## Hito 1: Backend API, Validación, ProblemDetail y RLS
-
-Desarrollamos e integrarnos la capa REST API para AequiVault en Spring Boot, protegiendo las reglas de negocio y respetando el aislamiento multi-inquilino físico de PostgreSQL (RLS).
-
-### Cambios en Backend
-1. **Modelado del Dominio**:
-   * [LedgerAccount.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/main/java/com/aequivault/domain/model/LedgerAccount.java): Modelo puro sin anotaciones de persistencia ni Spring.
-   * [LedgerAccountRepositoryImpl.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/main/java/com/aequivault/infrastructure/persistence/repository/LedgerAccountRepositoryImpl.java): Mapeador infra a dominio usando MapStruct.
-2. **Contratos (DTOs)**:
-   * [JournalEntryRequest.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/main/java/com/aequivault/infrastructure/web/dto/JournalEntryRequest.java): Payload de entrada usando una lista plana con indicación del tipo de partida (`DEBIT` o `CREDIT`).
-3. **Controladores REST**:
-   * [LedgerAccountController.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/main/java/com/aequivault/infrastructure/web/LedgerAccountController.java): Exposición del catálogo de cuentas (COA) bajo restricciones RLS.
-   * [JournalEntryController.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/main/java/com/aequivault/infrastructure/web/JournalEntryController.java): Registro de borradores (`DRAFT`) o asientos firmes (`POSTED`).
-4. **Manejo Global de Errores (RFC 7807)**:
-   * [GlobalExceptionHandler.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/main/java/com/aequivault/infrastructure/web/exception/GlobalExceptionHandler.java): Mapeo de validaciones de negocio a `422 Unprocessable Entity` y errores sintácticos a `400 Bad Request`.
+This document summarizes the complete implementation and architectural validation of AequiVault, covering the multi-tenant transactional API (Milestone 1), the Reactive Graphical User Interface in Angular 18 (Milestone 2), and the Hierarchical Chart of Accounts with PostgreSQL LTREE (Milestone 3).
 
 ---
 
-## Hito 2: Interfaz Gráfica y Reactividad (Angular 18 + Signals)
+## Milestone 1: Backend API, Validation, ProblemDetail, and RLS
 
-Diseñamos e implementamos el módulo frontend en Angular 18, estructurando la lógica de UI mediante el patrón **Smart/Dumb** y garantizando un diseño premium con CSS nativo.
+We developed and integrated the REST API layer for AequiVault in Spring Boot, protecting business rules and respecting PostgreSQL's physical multi-tenant isolation via Row-Level Security (RLS).
 
-### Cambios en Frontend
-1. **Diseño y Estética Premium**:
-   * [styles.scss](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/frontend/src/styles.scss): Estilos globales aplicando variables CSS para **Glassmorphism**, tipografía **Outfit** de Google Fonts, scrollbars personalizados y un esquema de colores de nivel financiero (Verde Esmeralda para estados balanceados y Rojo Coral para alertas).
-2. **Cerebro Reactivo con Signals (Evitando RxJS en UI)**:
-   * [journal-entry-state.service.ts](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/frontend/src/app/core/services/journal-entry-state.service.ts): Servicio de estado local que expone las señales de cabecera y el array reactivo de líneas. La reactividad se propaga por referencia de forma inmutable (`[...current, newLine]`).
-   * **Cálculos Matemáticos**: Mediante `computed()` se derivan dinámicamente `debitSum()`, `creditSum()`, y `difference()` (este último redondeado a 4 decimales para evitar problemas de coma flotante de JS), controlando que el botón de envío se habilite solo cuando `canSubmit()` sea válido según el estado.
-3. **Andamiaje de Componentes (Dumb/Presentational)**:
-   * [journal-line-table.component.ts](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/frontend/src/app/features/journal/components/journal-line-table/journal-line-table.component.ts): Renderiza la grilla dinámica. Implementa el selector HTML nativo estilizado en CSS, lo que encapsula la selección de cuentas (COA) permitiendo migrar a autocompletadores más complejos en el futuro sin modificar la arquitectura.
-   * [journal-entry-summary.component.ts](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/frontend/src/app/features/journal/components/journal-entry-summary/journal-entry-summary.component.ts): Muestra acumuladores en tiempo real y el banner adaptativo de balanceo.
-   * [journal-entry-form.component.ts](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/frontend/src/app/features/journal/components/journal-entry-form/journal-entry-form.component.ts): Encabeza los datos generales del asiento y aloja de forma adaptativa el selector de divisa y número de asiento.
-4. **Contenedor Smart e Integración HTTP**:
-   * [journal-entry-container.component.ts](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/frontend/src/app/features/journal/journal-entry-container/journal-entry-container.component.ts): Orquesta la carga de cuentas y el envío del asiento.
-   * **Simulación de RLS**: Integra un selector de inquilino activo (`activeTenantId()`) que al cambiar de contexto actualiza el COA desde el backend inyectando el encabezado `X-Tenant-ID` en cada llamada HTTP. Esto demuestra físicamente el aislamiento RLS del backend.
-   * **Mapeo de RFC 7807**: Interpreta payloads de error `ProblemDetail`, desplegando banners de alerta detallando campos con problemas sintácticos u objeciones del dominio contable.
+### Backend Changes
+1. **Domain Modeling**:
+   * [LedgerAccount.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/main/java/com/aequivault/domain/model/LedgerAccount.java): Pure model without persistence or Spring annotations.
+   * [LedgerAccountRepositoryImpl.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/main/java/com/aequivault/infrastructure/persistence/repository/LedgerAccountRepositoryImpl.java): Infrastructure to domain mapper using MapStruct.
+2. **Contracts (DTOs)**:
+   * [JournalEntryRequest.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/main/java/com/aequivault/infrastructure/web/dto/JournalEntryRequest.java): Input payload using a flat list with indication of the line type (`DEBIT` or `CREDIT`).
+3. **REST Controllers**:
+   * [LedgerAccountController.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/main/java/com/aequivault/infrastructure/web/LedgerAccountController.java): Exposing the Chart of Accounts (COA) under RLS constraints.
+   * [JournalEntryController.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/main/java/com/aequivault/infrastructure/web/JournalEntryController.java): Posting drafts (`DRAFT`) or posted journal entries (`POSTED`).
+4. **Global Error Handling (RFC 7807)**:
+   * [GlobalExceptionHandler.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/main/java/com/aequivault/infrastructure/web/exception/GlobalExceptionHandler.java): Mapping business validations to `422 Unprocessable Entity` and syntactic errors to `400 Bad Request`.
 
 ---
 
-## Verificación y Pruebas Automatizadas
+## Milestone 2: Graphical User Interface and Reactivity (Angular 18 + Signals)
 
-Se ha expandido la suite de pruebas del frontend logrando verificar de punta a punta la estabilidad de la lógica de interfaz de usuario.
+We designed and implemented the frontend module in Angular 18, structuring UI logic using the Smart/Dumb (Container/Presentational) pattern and ensuring a premium design with native CSS.
 
-### Tests Unitarios del Frontend
-* **`JournalEntryStateService`**: Valida las sumas automáticas, balanceo contable, inmutabilidad de adiciones/remociones y habilitación correcta del `canSubmit` según si el asiento está en estado `DRAFT` o `POSTED`.
-* **`JournalLineTableComponent`**: Comprueba la correcta renderización de la cuadrícula interactiva y la emisión correspondiente de eventos de modificación (`updateLine`), adición (`addLine`) y eliminación (`removeLine`).
-* **`JournalEntrySummaryComponent`**: Verifica el formateo correcto de montos monetarios en la UI y la visibilidad de los banners de estado ("Asiento Balanceado" vs "Asiento Desbalanceado").
-* **`JournalEntryFormComponent`**: Valida el enlazado asincrónico bidireccional (`fakeAsync` / `tick`) de los inputs de metadata y la visibilidad condicional del campo `entryNumber`.
-* **`JournalEntryContainerComponent`**: Simula el consumo de servicios HTTP usando dobles de prueba (`jasmine.createSpyObj`), validando la inyección de tenant, reset del formulario al cambiar de inquilino y control de alertas.
+### Frontend Changes
+1. **Design and Premium Aesthetics**:
+   * [styles.scss](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/frontend/src/styles.scss): Global styles applying CSS variables for **Glassmorphism**, Google Fonts' **Outfit** typography, custom scrollbars, and a financial-grade color scheme (Emerald Green for balanced states and Coral Red for alerts).
+2. **Reactive Core with Signals (Avoiding RxJS in UI)**:
+   * [journal-entry-state.service.ts](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/frontend/src/app/core/services/journal-entry-state.service.ts): Local state service exposing header signals and the reactive array of lines. Reactivity propagates by reference in an immutable fashion (`[...current, newLine]`).
+   * **Mathematical Calculations**: Using `computed()`, `debitSum()`, `creditSum()`, and `difference()` are dynamically derived (the latter rounded to 4 decimals to avoid JS floating-point issues), controlling that the submit button is enabled only when `canSubmit()` is valid based on state.
+3. **Component Scaffolding (Dumb/Presentational)**:
+   * [journal-line-table.component.ts](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/frontend/src/app/features/journal/components/journal-line-table/journal-line-table.component.ts): Renders the dynamic grid. Implements the native HTML select styled in CSS, which encapsulates account selection (COA), allowing migrations to more complex autocomplete components in the future without changing the architecture.
+   * [journal-entry-summary.component.ts](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/frontend/src/app/features/journal/components/journal-entry-summary/journal-entry-summary.component.ts): Displays real-time accumulators and the adaptive balance banner.
+   * [journal-entry-form.component.ts](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/frontend/src/app/features/journal/components/journal-entry-form/journal-entry-form.component.ts): Headers the general journal entry data and adaptively hosts the currency selector and entry number.
+4. **Smart Container and HTTP Integration**:
+   * [journal-entry-container.component.ts](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/frontend/src/app/features/journal/journal-entry-container/journal-entry-container.component.ts): Orchestrates accounts loading and entry submission.
+   * **RLS Simulation**: Integrates an active tenant selector (`activeTenantId()`) which, when context changes, updates the COA from the backend by injecting the `X-Tenant-ID` header in every HTTP call. This physically demonstrates the backend's RLS isolation.
+   * **RFC 7807 Mapping**: Interprets `ProblemDetail` error payloads, displaying alert banners detailing fields with syntactic issues or accounting domain objections.
 
-### Resultados de la Suite de Pruebas de Frontend
-Ejecutando `npm test -- --watch=false --browsers=ChromeHeadless` logramos **27/27 tests aprobados con éxito**:
+---
+
+## Verification and Automated Tests
+
+The frontend test suite has been expanded, successfully verifying the user interface logic stability end-to-end.
+
+### Frontend Unit Tests
+* **`JournalEntryStateService`**: Validates automatic sums, accounting balance, immutability of additions/removals, and correct enabling of `canSubmit` based on whether the entry is in `DRAFT` or `POSTED` status.
+* **`JournalLineTableComponent`**: Tests the correct rendering of the interactive grid and the corresponding emission of modification (`updateLine`), addition (`addLine`), and deletion (`removeLine`) events.
+* **`JournalEntrySummaryComponent`**: Verifies correct formatting of monetary amounts in the UI and the visibility of status banners ("Balanced Entry" vs "Unbalanced Entry").
+* **`JournalEntryFormComponent`**: Validates bidirectional asynchronous binding (`fakeAsync` / `tick`) of metadata inputs and conditional visibility of the `entryNumber` field.
+* **`JournalEntryContainerComponent`**: Simulates HTTP service consumption using test doubles (`jasmine.createSpyObj`), validating tenant injection, form reset when switching tenants, and alert handling.
+
+### Frontend Test Suite Results
+Running `npm test -- --watch=false --browsers=ChromeHeadless` we achieved **27/27 successful test passes**:
 ```text
 Chrome Headless 148.0.0.0 (Linux 0.0.0): Connected on socket baLs9b_rNaN69S6wAAAB with id 40925541
 Chrome Headless 148.0.0.0 (Linux 0.0.0): Executed 27 of 27 SUCCESS (2.006 secs / 1.782 secs)
 TOTAL: 27 SUCCESS
 ```
 
-Ambos hitos se encuentran plenamente validados, con el motor contable RLS del backend conectado e interactuando de forma reactiva, robusta y segura con el frontend en Angular 18.
+Both milestones are fully validated, with the backend's RLS accounting engine connected and interacting in a reactive, robust, and secure manner with the Angular 18 frontend.
 
 ---
 
-## Hito 3: Plan de Cuentas Jerárquico (LTREE, Delete Guard y Recursividad)
+## Milestone 3: Hierarchical Chart of Accounts (LTREE, Delete Guard, and Recursion)
 
-En esta fase, construimos un catálogo de cuentas (Chart of Accounts) dinámico y jerárquico que permite a las empresas estructurar sus cuentas contables en árbol. Optamos por la **Alternativa A (Foco en el Contador y el Negocio)** para demostrar maestría en estructuras de datos relacionales complejas y reactividad recursiva.
+In this phase, we built a dynamic and hierarchical Chart of Accounts (COA) that allows companies to structure their accounts in a tree. We chose Option A (Focus on Accountant and Business) to demonstrate mastery in complex relational data structures and recursive reactivity.
 
-### 1. Capa de Datos y Persistencia (PostgreSQL LTREE)
-* **El Path Jerárquico**: Utilizamos la extensión nativa `LTREE` de PostgreSQL para almacenar la jerarquía. El path completo (ej. `1.1.01`) se construye concatenando el path del padre con el código del hijo.
-* **Validación Alfanumérica**: Añadimos una validación en el constructor de dominio `AccountGroup` que restringe el código de cuenta a caracteres exclusivamente alfanuméricos (`^[a-zA-Z0-9]+$`). Esto previene caracteres especiales (como espacios o guiones medios) que romperían la sintaxis del tipo `LTREE` en PostgreSQL.
-* **Aislamiento RLS**: Todas las operaciones jerárquicas están aisladas físicamente por inquilino (`tenant_id`), asegurando que ninguna empresa pueda consultar o modificar grupos de otra corporación.
+### 1. Data and Persistence Layer (PostgreSQL LTREE)
+* **The Hierarchical Path**: We use PostgreSQL's native `LTREE` extension to store the hierarchy. The full path (e.g. `1.1.01`) is built by concatenating the parent path with the child code.
+* **Alphanumeric Validation**: We added a validation in the `AccountGroup` domain constructor that restricts the account code exclusively to alphanumeric characters (`^[a-zA-Z0-9]+$`). This prevents special characters (like spaces or hyphens) from breaking the syntax of the PostgreSQL `LTREE` type.
+* **RLS Isolation**: All hierarchical operations are physically isolated by tenant (`tenant_id`), ensuring that no business can query or modify groups belonging to another corporation.
 
-### 2. Delete Guard (Regla de Eliminación Segura)
-Para evitar cuentas o subgrupos huérfanos, implementamos una regla estricta de eliminación:
-* Se ejecuta una consulta nativa de Postgres (`path <@ :parentPath`) para comprobar si el grupo tiene subgrupos descendientes.
-* Se valida la existencia de cuentas contables asignadas al grupo en cuestión.
-* Si el grupo posee dependientes, la base de datos y la capa de negocio abortan la transacción lanzando un error del dominio que es formateado por el controlador como un `422 Unprocessable Entity` (RFC 7807).
+### 2. Delete Guard (Safe Deletion Rule)
+To prevent orphaned accounts or sub-groups, we implemented a strict deletion rule:
+* A native Postgres query (`path <@ :parentPath`) is executed to check if the group has descendant sub-groups.
+* The existence of ledger accounts assigned to the group in question is validated.
+* If the group has dependents, the database and the business layer abort the transaction, throwing a domain error that is formatted by the controller as a `422 Unprocessable Entity` (RFC 7807).
 
-### 3. Frontend Angular 18 (Árbol Recursivo Reactivo)
-* **Reconstrucción en Memoria O(N)**: En lugar de procesar y anidar el árbol recursivamente en el backend (lo cual implicaría consultas costosas u sobrecarga en el servidor Java), el frontend consume los grupos y cuentas en una lista plana y los estructura en memoria en un solo pase de complejidad temporal lineal $O(N)$.
-* **Control Flow Directives**: Aprovechamos el control de flujo nativo de Angular 18 (`@if`, `@for` y `@track`) para renderizar dinámicamente los subgrupos y las cuentas subordinadas.
-* **Componente Dumb Recursivo**: El componente `<app-coa-tree-node>` se llama a sí mismo de manera recursiva para renderizar niveles infinitos de profundidad del catálogo.
-* **Navegación por Pestañas**: Añadimos un menú premium de navegación de pestañas en `<app-journal-entry-container>` que permite alternar fluidamente entre el registro de asientos diarios y la gestión del Plan de Cuentas (COA) con transiciones animadas y un diseño moderno de cristal templado (**Glassmorphism**).
+### 3. Angular 18 Frontend (Reactive Recursive Tree)
+* **In-Memory $O(N)$ Reconstruction**: Instead of processing and nesting the tree recursively in the backend (which would entail expensive queries or JVM overhead), the frontend consumes groups and accounts as a flat list and structures them in memory in a single pass of linear time complexity $O(N)$.
+* **Control Flow Directives**: We leverage native Angular 18 control flow (`@if`, `@for`, and `@track`) to dynamically render sub-groups and subordinate accounts.
+* **Recursive Dumb Component**: The `<app-coa-tree-node>` component calls itself recursively to render infinite depth levels of the catalog.
+* **Tabbed Navigation**: We added a premium tabbed navigation menu in `<app-journal-entry-container>` that allows fluid transitions between journal entry registration and Chart of Accounts (COA) management, featuring animated transitions and a modern glassmorphic design.
 
 ---
 
-## Verificación de Calidad y Pruebas Automatizadas (Hito 3)
+## Quality Verification and Automated Tests (Milestone 3)
 
-### Pruebas del Backend (Spring Boot + JUnit 5)
-Escribimos tests de integración especializados en [AccountGroupControllerTest.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/test/java/com/aequivault/infrastructure/web/AccountGroupControllerTest.java) que garantizan el correcto funcionamiento de:
-1. La inserción jerárquica con `LTREE`.
-2. Las restricciones del Delete Guard cuando un grupo tiene hijos o cuentas asignadas.
-3. El aislamiento RLS inyectando el header `X-Tenant-ID`.
+### Backend Tests (Spring Boot + JUnit 5)
+We wrote specialized integration tests in [AccountGroupControllerTest.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/test/java/com/aequivault/infrastructure/web/AccountGroupControllerTest.java) ensuring the correct operation of:
+1. Hierarchical insertion with `LTREE`.
+2. Delete Guard constraints when a group has children or assigned accounts.
+3. RLS isolation by injecting the `X-Tenant-ID` header.
 
-Ejecutamos la suite con `./mvnw test` logrando **27/27 tests en verde**:
+We ran the suite with `./mvnw test` achieving **27/27 tests in green**:
 ```text
 [INFO] Results:
 [INFO]
@@ -108,10 +108,10 @@ Ejecutamos la suite con `./mvnw test` logrando **27/27 tests en verde**:
 [INFO] ------------------------------------------------------------------------
 ```
 
-### Tests Unitarios del Frontend (Jasmine + Karma)
-Modificamos el spec de `JournalEntryContainerComponent` para incluir spies en las operaciones de grupos y agregamos un test para comprobar que la navegación a la pestaña "Plan de Cuentas" cargue los grupos correctamente.
+### Frontend Unit Tests (Jasmine + Karma)
+We modified the spec of `JournalEntryContainerComponent` to include spies on group operations and added a test to verify that navigating to the "Chart of Accounts" tab loads the groups correctly.
 
-Ejecutamos `npm test` logrando **28/28 tests aprobados exitosamente**:
+We executed `npm test` achieving **28/28 successfully passed tests**:
 ```text
 TOTAL: 28 SUCCESS
 ```

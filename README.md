@@ -1,5 +1,7 @@
 # 🏛️ AequiVault: API-First Double-Entry Accounting Engine
 
+[English](README.md) | [Español](README.es.md) | [Português](README.pt-BR.md)
+
 [![Java](https://img.shields.io/badge/Java-21-orange.svg?style=flat-square&logo=openjdk)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3-brightgreen.svg?style=flat-square&logo=springboot)](https://spring.io/projects/spring-boot)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg?style=flat-square&logo=postgresql)](https://www.postgresql.org/)
