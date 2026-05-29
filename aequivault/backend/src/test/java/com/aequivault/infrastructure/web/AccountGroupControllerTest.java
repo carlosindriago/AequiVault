@@ -5,6 +5,7 @@ import com.aequivault.infrastructure.persistence.entity.LedgerAccountEntity;
 import com.aequivault.infrastructure.persistence.entity.TenantEntity;
 import com.aequivault.infrastructure.persistence.repository.SpringDataAccountGroupRepository;
 import com.aequivault.infrastructure.persistence.repository.SpringDataLedgerAccountRepository;
+import com.aequivault.infrastructure.persistence.repository.SpringDataNotificationRepository;
 import com.aequivault.infrastructure.persistence.repository.TenantRepository;
 import com.aequivault.infrastructure.security.TenantContext;
 import org.junit.jupiter.api.AfterEach;
@@ -33,6 +34,9 @@ class AccountGroupControllerTest {
 
     @Autowired
     private TenantRepository tenantRepository;
+
+    @Autowired
+    private SpringDataNotificationRepository notificationRepository;
 
     @Autowired
     private SpringDataAccountGroupRepository accountGroupRepository;
@@ -74,6 +78,7 @@ class AccountGroupControllerTest {
     void tearDown() {
         TenantContext.setTenantId(tenantId.toString());
         transactionTemplate.executeWithoutResult(status -> {
+            notificationRepository.deleteAll();
             ledgerAccountRepository.deleteAll();
             accountGroupRepository.deleteAll();
         });
@@ -81,6 +86,7 @@ class AccountGroupControllerTest {
 
         TenantContext.setTenantId(tenantIdB.toString());
         transactionTemplate.executeWithoutResult(status -> {
+            notificationRepository.deleteAll();
             accountGroupRepository.deleteAll();
         });
         TenantContext.clear();

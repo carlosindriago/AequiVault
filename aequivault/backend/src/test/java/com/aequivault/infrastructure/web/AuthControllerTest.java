@@ -59,6 +59,7 @@ class AuthControllerTest {
                 entityManager.createNativeQuery("DELETE FROM journal_entries").executeUpdate();
                 entityManager.createNativeQuery("DELETE FROM ledger_accounts").executeUpdate();
                 entityManager.createNativeQuery("DELETE FROM account_groups").executeUpdate();
+                entityManager.createNativeQuery("DELETE FROM notifications").executeUpdate();
             });
             com.aequivault.infrastructure.security.TenantContext.clear();
         }
@@ -89,6 +90,7 @@ class AuthControllerTest {
                 entityManager.createNativeQuery("DELETE FROM journal_entries").executeUpdate();
                 entityManager.createNativeQuery("DELETE FROM ledger_accounts").executeUpdate();
                 entityManager.createNativeQuery("DELETE FROM account_groups").executeUpdate();
+                entityManager.createNativeQuery("DELETE FROM notifications").executeUpdate();
             });
             com.aequivault.infrastructure.security.TenantContext.clear();
         }

@@ -18,9 +18,11 @@ import java.util.stream.Collectors;
 public class AccountGroupController {
 
     private final AccountGroupRepository accountGroupRepository;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
-    public AccountGroupController(AccountGroupRepository accountGroupRepository) {
+    public AccountGroupController(AccountGroupRepository accountGroupRepository, org.springframework.context.ApplicationEventPublisher eventPublisher) {
         this.accountGroupRepository = accountGroupRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @PostMapping
@@ -51,6 +53,13 @@ public class AccountGroupController {
         );
 
         accountGroupRepository.save(domain);
+
+        eventPublisher.publishEvent(new com.aequivault.domain.event.AccountGroupCreatedEvent(
+                domain.tenantId(),
+                domain.id(),
+                domain.name(),
+                domain.code()
+        ));
 
         AccountGroupResponse response = new AccountGroupResponse(
                 domain.id(),

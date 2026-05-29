@@ -7,6 +7,7 @@ import com.aequivault.infrastructure.persistence.repository.SpringDataAccountGro
 import com.aequivault.infrastructure.persistence.repository.SpringDataFinancialPeriodRepository;
 import com.aequivault.infrastructure.persistence.repository.SpringDataJournalEntryRepository;
 import com.aequivault.infrastructure.persistence.repository.SpringDataLedgerAccountRepository;
+import com.aequivault.infrastructure.persistence.repository.SpringDataNotificationRepository;
 import com.aequivault.infrastructure.persistence.repository.TenantRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +33,9 @@ class FinancialPeriodIntegrationTest {
 
     @Autowired
     private TenantRepository tenantRepository;
+
+    @Autowired
+    private SpringDataNotificationRepository notificationRepository;
 
     @Autowired
     private SpringDataAccountGroupRepository accountGroupRepository;
@@ -82,6 +86,7 @@ class FinancialPeriodIntegrationTest {
     void tearDown() {
         com.aequivault.infrastructure.security.TenantContext.setTenantId(tenantId.toString());
         transactionTemplate.executeWithoutResult(status -> {
+            notificationRepository.deleteAll();
             journalEntryRepository.deleteAll();
             periodRepository.deleteAll();
             ledgerAccountRepository.deleteAll();

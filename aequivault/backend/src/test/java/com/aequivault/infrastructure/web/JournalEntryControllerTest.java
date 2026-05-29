@@ -7,6 +7,7 @@ import com.aequivault.infrastructure.persistence.repository.SpringDataAccountGro
 import com.aequivault.infrastructure.persistence.repository.SpringDataJournalEntryRepository;
 import com.aequivault.infrastructure.persistence.repository.SpringDataDraftJournalEntryRepository;
 import com.aequivault.infrastructure.persistence.repository.SpringDataLedgerAccountRepository;
+import com.aequivault.infrastructure.persistence.repository.SpringDataNotificationRepository;
 import com.aequivault.infrastructure.persistence.repository.TenantRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +34,9 @@ class JournalEntryControllerTest {
 
     @Autowired
     private TenantRepository tenantRepository;
+
+    @Autowired
+    private SpringDataNotificationRepository notificationRepository;
 
     @Autowired
     private SpringDataAccountGroupRepository accountGroupRepository;
@@ -87,6 +91,7 @@ class JournalEntryControllerTest {
         // 1. Limpiar Tenant A con su contexto RLS
         com.aequivault.infrastructure.security.TenantContext.setTenantId(tenantAId.toString());
         transactionTemplate.executeWithoutResult(status -> {
+            notificationRepository.deleteAll();
             journalEntryRepository.deleteAll();
             draftJournalEntryRepository.deleteAll();
             ledgerAccountRepository.deleteAll();
@@ -96,6 +101,7 @@ class JournalEntryControllerTest {
         // 2. Limpiar Tenant B con su contexto RLS
         com.aequivault.infrastructure.security.TenantContext.setTenantId(tenantBId.toString());
         transactionTemplate.executeWithoutResult(status -> {
+            notificationRepository.deleteAll();
             journalEntryRepository.deleteAll();
             draftJournalEntryRepository.deleteAll();
             ledgerAccountRepository.deleteAll();

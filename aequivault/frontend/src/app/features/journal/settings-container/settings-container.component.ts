@@ -1,8 +1,9 @@
-import { Component, Input, inject, signal, Renderer2 } from '@angular/core';
+import { Component, inject, signal, computed, Renderer2 } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { TranslationStateService } from '../../../core/services/translation-state.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-settings-container',
@@ -45,12 +46,12 @@ import { TranslationStateService } from '../../../core/services/translation-stat
             <p class="card-desc">{{ t('settings.tenant_desc') }}</p>
             <div class="info-row">
               <span class="info-label">ID:</span>
-              <code class="info-value">{{ tenantId }}</code>
+              <code class="info-value">{{ activeTenantId() }}</code>
             </div>
             <div class="info-row">
               <span class="info-label">{{ t('settings.tenant_name') }}:</span>
               <strong class="info-value">
-                {{ tenantId === '212f7927-ed0d-495c-b39b-94364d5e2f9b' ? t('tenant.tenant_a') : t('tenant.tenant_b') }}
+                {{ activeTenantName() }}
               </strong>
             </div>
           </div>
@@ -196,13 +197,22 @@ import { TranslationStateService } from '../../../core/services/translation-stat
   `]
 })
 export class SettingsContainerComponent {
-  @Input({ required: true }) tenantId!: string;
-
   translationState = inject(TranslationStateService);
+  private authService = inject(AuthService);
   private renderer = inject(Renderer2);
   private document = inject(DOCUMENT);
   
   private _darkMode = signal<boolean>(true);
+
+  activeTenantId = computed(() => this.authService.currentUser()?.tenantId || 'N/A');
+  activeTenantName = computed(() => {
+    const email = this.authService.currentUser()?.email || '';
+    if (!email) return 'AequiVault';
+    const domainPart = email.split('@')[1];
+    if (!domainPart) return 'AequiVault Tenant';
+    const company = domainPart.split('.')[0];
+    return company.charAt(0).toUpperCase() + company.slice(1);
+  });
 
   onLanguageChange(lang: 'en' | 'es') {
     this.translationState.setLanguage(lang);

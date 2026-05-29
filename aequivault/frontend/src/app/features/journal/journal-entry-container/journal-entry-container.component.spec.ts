@@ -13,6 +13,7 @@ import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { LedgerAccountDto } from '../../../core/models/ledger-account.model';
 import { JournalEntryResponse } from '../../../core/models/journal-entry.model';
+import { NotificationService } from '../../../core/services/notification.service';
 
 describe('JournalEntryContainerComponent', () => {
   let component: JournalEntryContainerComponent;
@@ -56,6 +57,12 @@ describe('JournalEntryContainerComponent', () => {
       navigate: jasmine.createSpy('navigate')
     };
 
+    const mockNotificationService = {
+      unreadNotifications: signal([]),
+      loadUnreadNotifications: jasmine.createSpy('loadUnreadNotifications').and.returnValue(of([])),
+      markAsRead: jasmine.createSpy('markAsRead').and.returnValue(of(void 0))
+    };
+
     await TestBed.configureTestingModule({
       imports: [
         JournalEntryContainerComponent,
@@ -84,7 +91,8 @@ describe('JournalEntryContainerComponent', () => {
         { provide: DashboardService, useValue: dashboardServiceSpy },
         { provide: TranslationStateService, useValue: mockTranslationService },
         { provide: AuthService, useValue: mockAuthService },
-        { provide: Router, useValue: mockRouter }
+        { provide: Router, useValue: mockRouter },
+        { provide: NotificationService, useValue: mockNotificationService }
       ]
     }).compileComponents();
 

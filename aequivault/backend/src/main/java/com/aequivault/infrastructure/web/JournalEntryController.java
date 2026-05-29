@@ -22,12 +22,15 @@ public class JournalEntryController {
     private final JournalEntryRepository journalEntryRepository;
     private final com.aequivault.domain.model.FinancialPeriodService financialPeriodService;
     private final DoubleEntryValidationService validationService = new DoubleEntryValidationService();
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     public JournalEntryController(
             JournalEntryRepository journalEntryRepository,
-            com.aequivault.domain.model.FinancialPeriodService financialPeriodService) {
+            com.aequivault.domain.model.FinancialPeriodService financialPeriodService,
+            org.springframework.context.ApplicationEventPublisher eventPublisher) {
         this.journalEntryRepository = journalEntryRepository;
         this.financialPeriodService = financialPeriodService;
+        this.eventPublisher = eventPublisher;
     }
 
     @PostMapping
@@ -87,6 +90,13 @@ public class JournalEntryController {
 
         // 6. Persistir mediante el puerto/adaptador
         journalEntryRepository.save(entry);
+
+        eventPublisher.publishEvent(new com.aequivault.domain.event.JournalEntryCreatedEvent(
+                entry.getTenantId(),
+                entry.getId(),
+                entry.getEntryNumber(),
+                entry.getDescription()
+        ));
 
         // 7. Retornar la respuesta mapeada
         return ResponseEntity.status(HttpStatus.CREATED).body(mapToResponse(entry, resolvedCurrency));

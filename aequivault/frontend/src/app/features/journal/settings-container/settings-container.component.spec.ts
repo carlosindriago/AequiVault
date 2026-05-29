@@ -4,12 +4,20 @@ import { TranslationStateService } from '../../../core/services/translation-stat
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { By } from '@angular/platform-browser';
 import { DOCUMENT } from '@angular/common';
+import { AuthService } from '../../../core/services/auth.service';
+import { signal } from '@angular/core';
 
 describe('SettingsContainerComponent', () => {
   let component: SettingsContainerComponent;
   let fixture: ComponentFixture<SettingsContainerComponent>;
   let translationStateService: TranslationStateService;
   let doc: Document;
+
+  const mockAuthService = {
+    currentUser: signal({ email: 'super@omega.com', tenantId: '212f7927-ed0d-495c-b39b-94364d5e2f9b' }),
+    isAuthenticated: signal(true),
+    getToken: () => 'fake-token'
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -24,7 +32,8 @@ describe('SettingsContainerComponent', () => {
         })
       ],
       providers: [
-        TranslationStateService
+        TranslationStateService,
+        { provide: AuthService, useValue: mockAuthService }
       ]
     }).compileComponents();
 
@@ -33,7 +42,6 @@ describe('SettingsContainerComponent', () => {
 
     fixture = TestBed.createComponent(SettingsContainerComponent);
     component = fixture.componentInstance;
-    component.tenantId = '212f7927-ed0d-495c-b39b-94364d5e2f9b';
     fixture.detectChanges();
   });
 

@@ -1,8 +1,9 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { JournalEntryStateService } from '../../../core/services/journal-entry-state.service';
 import { AccountService } from '../../../core/services/account.service';
 import { JournalService } from '../../../core/services/journal.service';
@@ -172,13 +173,45 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
             </div>
 
             <!-- Notification Bell Icon with Badge -->
-            <button type="button" class="notification-btn">
-              <svg class="bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-              </svg>
-              <span class="notification-badge"></span>
-            </button>
+            <div class="notification-container">
+              <button type="button" class="notification-btn" (click)="toggleNotificationMenu()">
+                <svg class="bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                @if (unreadCount() > 0) {
+                  <span class="notification-badge">{{ unreadCount() }}</span>
+                }
+              </button>
+
+              @if (isNotificationMenuOpen()) {
+                <div class="notification-dropdown glass-panel">
+                  <div class="dropdown-header">
+                    <h4>{{ t('notifications.title', 'Notifications') }}</h4>
+                  </div>
+                  <div class="dropdown-body">
+                    @if (notifications().length > 0) {
+                      <div class="notification-list">
+                        @for (notif of notifications(); track notif.id) {
+                          <div class="notification-item">
+                            <div class="notification-item-content">
+                              <h5>{{ notif.title }}</h5>
+                              <p>{{ notif.message }}</p>
+                              <span class="notification-time">{{ formatTime(notif.createdAt) }}</span>
+                            </div>
+                            <button class="btn-read" (click)="markAsRead(notif.id, $event)" title="Mark as read">
+                              ✓
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <p class="no-notifications">{{ t('notifications.empty', 'No tienes notificaciones nuevas') }}</p>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
 
             <!-- User Profile drop info -->
             <div class="user-profile" (click)="toggleProfileMenu()">
@@ -394,8 +427,7 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
 
           @if (activeTab() === 'settings') {
             <div class="settings-workspace animate-workspace">
-              <app-settings-container 
-                [tenantId]="activeTenantId()">
+              <app-settings-container>
               </app-settings-container>
             </div>
           }
@@ -548,6 +580,9 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
       background: var(--bg-secondary);
       color: var(--text-primary);
     }
+    .notification-container {
+      position: relative;
+    }
     .notification-btn {
       position: relative;
       background: transparent;
@@ -571,12 +606,117 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
     }
     .notification-badge {
       position: absolute;
-      top: 6px;
-      right: 6px;
-      width: 6px;
-      height: 6px;
+      top: 0px;
+      right: 0px;
+      min-width: 16px;
+      height: 16px;
       background-color: #ef4444;
+      border-radius: 9999px;
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+    }
+    .notification-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 320px;
+      max-height: 400px;
+      overflow-y: auto;
+      z-index: 1000;
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      border: 1.5px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-premium);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .dropdown-header h4 {
+      margin: 0;
+      color: #ffffff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 0.5rem;
+      text-align: left;
+    }
+    .notification-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .notification-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.6rem;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      transition: var(--transition-smooth);
+    }
+    .notification-item:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+    .notification-item-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      flex-grow: 1;
+      text-align: left;
+    }
+    .notification-item-content h5 {
+      margin: 0;
+      color: #f8fafc;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .notification-item-content p {
+      margin: 0;
+      color: #94a3b8;
+      font-size: 0.75rem;
+      line-height: 1.3;
+    }
+    .notification-time {
+      font-size: 0.65rem;
+      color: #64748b;
+    }
+    .btn-read {
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #818cf8;
+      cursor: pointer;
       border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      transition: var(--transition-smooth);
+      flex-shrink: 0;
+    }
+    .btn-read:hover {
+      background: rgba(99, 102, 241, 0.3);
+      color: #ffffff;
+      box-shadow: 0 0 8px rgba(99, 102, 241, 0.4);
+    }
+    .no-notifications {
+      margin: 0;
+      padding: 1.5rem 0;
+      color: #64748b;
+      font-size: 0.85rem;
+      text-align: center;
     }
     .user-profile {
       position: relative;
@@ -947,9 +1087,10 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
     }
   `]
 })
-export class JournalEntryContainerComponent implements OnInit {
+export class JournalEntryContainerComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private notificationService = inject(NotificationService);
 
   // Signals
   activeTenantId = signal<string>(this.authService.currentUser()?.tenantId || '');
@@ -957,6 +1098,10 @@ export class JournalEntryContainerComponent implements OnInit {
   isLoading = signal<boolean>(false);
   activeTab = signal<'dashboard' | 'ledger' | 'entry' | 'coa' | 'reports' | 'settings'>('dashboard');
   isProfileMenuOpen = signal<boolean>(false);
+  isNotificationMenuOpen = signal<boolean>(false);
+
+  notifications = this.notificationService.unreadNotifications;
+  unreadCount = computed(() => this.notifications().length);
 
   userName = computed(() => {
     const email = this.authService.currentUser()?.email || '';
@@ -1002,8 +1147,48 @@ export class JournalEntryContainerComponent implements OnInit {
     private translocoService: TranslocoService
   ) {}
 
+  private pollingIntervalId: any;
+
   ngOnInit() {
     this.fetchAccounts();
+    this.loadNotifications();
+    this.startNotificationPolling();
+  }
+
+  ngOnDestroy() {
+    if (this.pollingIntervalId) {
+      clearInterval(this.pollingIntervalId);
+    }
+  }
+
+  loadNotifications() {
+    this.notificationService.loadUnreadNotifications().subscribe({
+      error: (err) => console.error('Failed to load notifications', err)
+    });
+  }
+
+  startNotificationPolling() {
+    this.pollingIntervalId = setInterval(() => {
+      this.loadNotifications();
+    }, 10000); // Poll every 10 seconds
+  }
+
+  toggleNotificationMenu() {
+    this.isNotificationMenuOpen.update(val => !val);
+  }
+
+  markAsRead(id: string, event: Event) {
+    event.stopPropagation();
+    this.notificationService.markAsRead(id).subscribe();
+  }
+
+  formatTime(dateStr: string): string {
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + date.toLocaleDateString();
+    } catch (e) {
+      return dateStr;
+    }
   }
 
   toggleProfileMenu() {
