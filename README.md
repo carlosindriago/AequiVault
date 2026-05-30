@@ -1,6 +1,6 @@
 # 🏛️ AequiVault: API-First Double-Entry Accounting Engine
 
-[English](README.md) | [Español](README.es.md) | [Português](README.pt-BR.md)
+🌍 [English](README.md) | 🇪🇸 [Español](README.es.md) | 🇧🇷 [Português](README.pt-BR.md)
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg?style=flat-square&logo=openjdk)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3-brightgreen.svg?style=flat-square&logo=springboot)](https://spring.io/projects/spring-boot)
@@ -55,6 +55,15 @@ This project exemplifies best practices in large-scale software engineering and 
 
 ### 🚀 First-Time Setup Bootstrapping Pattern
 *   The system has a secure initialization flow. If the database is empty, the backend blocks all public APIs except the setup endpoints to create the first tenant and its corresponding `SUPER_ADMIN` user. Duplicate initializations are blocked and throw deterministic HTTP 422 errors.
+
+### 🔔 Decoupled Collaborative Notifications (Spring Events)
+*   Integrates Spring Boot's `ApplicationEventPublisher` to asynchronously broadcast notifications on write actions (such as posting entries or creating accounts).
+*   Event listeners process and persist notifications under multi-tenant RLS, which are instantly served to the Angular frontend via reactive Signal polling.
+
+### 👥 Granular RBAC, Soft-Delete & Positive Friction Auditing
+*   Implements a custom Role-Based Access Control (RBAC) schema allowing granular permissions mapping.
+*   Enforces a strict **soft-delete policy** (deactivating users to `INACTIVE` state rather than physical deletion).
+*   Employs **positive friction** for security-sensitive actions: deactivating/reactivating users requires the administrator's password challenge (matched via `PasswordEncoder.matches()`) and a justification reason, recording immutable logs in `user_status_audit` protected by RLS.
 
 ---
 
