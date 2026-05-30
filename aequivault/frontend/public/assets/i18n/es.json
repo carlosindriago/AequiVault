@@ -224,5 +224,9 @@
     "success_deactivate": "Usuario desactivado con éxito.",
     "success_reactivate": "Usuario reactivado con éxito.",
     "success_create_user": "Usuario creado con éxito."
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "empty": "No tienes notificaciones nuevas"
   }
 }

@@ -224,5 +224,9 @@
     "success_deactivate": "User deactivated successfully.",
     "success_reactivate": "User reactivated successfully.",
     "success_create_user": "User created successfully."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No new notifications"
   }
 }

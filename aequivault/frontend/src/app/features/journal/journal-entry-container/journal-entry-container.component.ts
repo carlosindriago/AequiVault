@@ -187,7 +187,7 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
               @if (isNotificationMenuOpen()) {
                 <div class="notification-dropdown glass-panel">
                   <div class="dropdown-header">
-                    <h4>{{ t('notifications.title', 'Notifications') }}</h4>
+                    <h4>{{ t('notifications.title') }}</h4>
                   </div>
                   <div class="dropdown-body">
                     @if (notifications().length > 0) {
@@ -206,7 +206,7 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
                         }
                       </div>
                     } @else {
-                      <p class="no-notifications">{{ t('notifications.empty', 'No tienes notificaciones nuevas') }}</p>
+                      <p class="no-notifications">{{ t('notifications.empty') }}</p>
                     }
                   </div>
                 </div>
