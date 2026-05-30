@@ -5,7 +5,9 @@ import { TranslocoTestingModule } from '@jsverse/transloco';
 import { By } from '@angular/platform-browser';
 import { DOCUMENT } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
+import { RbacService } from '../../../core/services/rbac.service';
 import { signal } from '@angular/core';
+import { of } from 'rxjs';
 
 describe('SettingsContainerComponent', () => {
   let component: SettingsContainerComponent;
@@ -17,6 +19,15 @@ describe('SettingsContainerComponent', () => {
     currentUser: signal({ email: 'super@omega.com', tenantId: '212f7927-ed0d-495c-b39b-94364d5e2f9b' }),
     isAuthenticated: signal(true),
     getToken: () => 'fake-token'
+  };
+
+  const mockRbacService = {
+    users: signal([]),
+    roles: signal([]),
+    permissions: signal([]),
+    loadPermissions: () => of([]),
+    loadRoles: () => of([]),
+    loadUsers: () => of([])
   };
 
   beforeEach(async () => {
@@ -33,7 +44,8 @@ describe('SettingsContainerComponent', () => {
       ],
       providers: [
         TranslationStateService,
-        { provide: AuthService, useValue: mockAuthService }
+        { provide: AuthService, useValue: mockAuthService },
+        { provide: RbacService, useValue: mockRbacService }
       ]
     }).compileComponents();
 

@@ -61,6 +61,7 @@ class SetupControllerTest {
                 entityManager.createNativeQuery("DELETE FROM ledger_accounts").executeUpdate();
                 entityManager.createNativeQuery("DELETE FROM account_groups").executeUpdate();
                 entityManager.createNativeQuery("DELETE FROM notifications").executeUpdate();
+                entityManager.createNativeQuery("DELETE FROM user_status_audit").executeUpdate();
             });
             com.aequivault.infrastructure.security.TenantContext.clear();
         }
@@ -92,6 +93,7 @@ class SetupControllerTest {
                 entityManager.createNativeQuery("DELETE FROM ledger_accounts").executeUpdate();
                 entityManager.createNativeQuery("DELETE FROM account_groups").executeUpdate();
                 entityManager.createNativeQuery("DELETE FROM notifications").executeUpdate();
+                entityManager.createNativeQuery("DELETE FROM user_status_audit").executeUpdate();
             });
             com.aequivault.infrastructure.security.TenantContext.clear();
         }
