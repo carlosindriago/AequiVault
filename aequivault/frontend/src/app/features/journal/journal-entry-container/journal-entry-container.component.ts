@@ -252,14 +252,7 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
           </div>
         </header>
 
-        <!-- Glowing Tenant context display pill -->
-        <div class="tenant-section">
-          <div class="tenant-badge">
-            <span class="tenant-icon">🏢</span>
-            <span class="tenant-name-label">{{ tenantName() }}</span>
-            <span class="tenant-id-pill">{{ activeTenantId().substring(0, 8) }}...</span>
-          </div>
-        </div>
+
 
         <!-- Notification Banner -->
         @if (notification(); as notif) {
@@ -806,45 +799,7 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
       color: #64748b;
     }
 
-    /* Tenant Selector Options Row */
-    .tenant-section {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 2rem;
-    }
-    .tenant-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.75rem;
-      background: rgba(15, 23, 42, 0.6);
-      border: 1.5px solid rgba(16, 185, 129, 0.4);
-      padding: 0.5rem 1rem;
-      border-radius: 20px;
-      color: #e2e8f0;
-      font-size: 0.85rem;
-      font-weight: 500;
-      box-shadow: 0 0 12px rgba(16, 185, 129, 0.08);
-      transition: var(--transition-smooth);
-    }
-    .tenant-badge:hover {
-      border-color: #10b981;
-      box-shadow: 0 0 16px rgba(16, 185, 129, 0.15);
-    }
-    .tenant-icon {
-      font-size: 1rem;
-    }
-    .tenant-name-label {
-      color: #ffffff;
-      font-weight: 600;
-    }
-    .tenant-id-pill {
-      background: rgba(16, 185, 129, 0.15);
-      color: #34d399;
-      padding: 0.15rem 0.5rem;
-      border-radius: 12px;
-      font-family: monospace;
-      font-size: 0.75rem;
-    }
+
 
     /* Core Journal Card */
     .journal-card {
