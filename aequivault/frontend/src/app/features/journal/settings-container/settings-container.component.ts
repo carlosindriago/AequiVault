@@ -215,10 +215,13 @@ import { RbacService, PermissionResponse, RoleResponse, UserResponse } from '../
                       type="checkbox" 
                       [id]="'perm-' + perm.id" 
                       [checked]="hasPermission(perm.id)"
-                      (change)="togglePermission(perm.id)" />
-                    <label [for]="'perm-' + perm.id">
-                      <strong>{{ perm.name }}</strong> - {{ perm.description }}
-                    </label>
+                      (change)="togglePermission(perm.id)"
+                      class="toggle-input" />
+                    <label [for]="'perm-' + perm.id" class="toggle-switch-label"></label>
+                    <div class="permission-text-info">
+                      <strong>{{ perm.name }}</strong>
+                      <span class="perm-desc">{{ perm.description }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -662,30 +665,75 @@ import { RbacService, PermissionResponse, RoleResponse, UserResponse } from '../
       text-align: left;
     }
     .permissions-checklist {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      max-height: 200px;
-      overflow-y: auto;
-      background: rgba(15, 23, 42, 0.4);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      background: rgba(15, 23, 42, 0.25);
       border: 1.5px solid rgba(255, 255, 255, 0.06);
-      border-radius: 8px;
-      padding: 0.75rem;
+      border-radius: 12px;
+      padding: 1rem;
     }
     .checkbox-row {
       display: flex;
-      align-items: flex-start;
-      gap: 0.5rem;
+      align-items: center;
+      gap: 12px;
       font-size: 0.8rem;
       color: #cbd5e1;
     }
-    .checkbox-row input {
-      margin-top: 0.15rem;
-      cursor: pointer;
+    .toggle-input {
+      opacity: 0;
+      position: absolute;
+      width: 0;
+      height: 0;
     }
-    .checkbox-row label {
+    .toggle-switch-label {
+      position: relative;
+      display: inline-block;
+      width: 38px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
       cursor: pointer;
-      color: #cbd5e1;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+    }
+    .toggle-switch-label::after {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #ffffff;
+      top: 2px;
+      left: 2px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .toggle-input:checked + .toggle-switch-label {
+      background: #10b981;
+      border-color: #10b981;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+    }
+    .toggle-input:checked + .toggle-switch-label::after {
+      transform: translateX(18px);
+    }
+    .permission-text-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      text-align: left;
+    }
+    .permission-text-info strong {
+      color: #f8fafc;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .permission-text-info .perm-desc {
+      color: #94a3b8;
+      font-size: 0.72rem;
     }
     .form-actions {
       display: flex;
