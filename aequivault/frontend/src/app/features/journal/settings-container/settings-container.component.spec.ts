@@ -22,12 +22,24 @@ describe('SettingsContainerComponent', () => {
   };
 
   const mockRbacService = {
-    users: signal([]),
-    roles: signal([]),
-    permissions: signal([]),
+    users: signal([
+      { id: '1', email: 'user1@test.com', status: 'ACTIVE', roles: [{ id: '10', name: 'ACCOUNTANT', description: 'Acc' }] }
+    ]),
+    roles: signal([
+      { id: '10', name: 'ACCOUNTANT', description: 'Acc', permissions: [{ id: '100', name: 'JOURNAL_READ', description: 'Read' }] }
+    ]),
+    permissions: signal([
+      { id: '100', name: 'JOURNAL_READ', description: 'Read' },
+      { id: '101', name: 'JOURNAL_WRITE', description: 'Write' }
+    ]),
     loadPermissions: () => of([]),
     loadRoles: () => of([]),
-    loadUsers: () => of([])
+    loadUsers: () => of([]),
+    createRole: () => of({ id: '12', name: 'NEW_ROLE', description: '', permissions: [] }),
+    updateRole: () => of({ id: '10', name: 'ACCOUNTANT', description: 'Updated', permissions: [] }),
+    createUser: () => of({ id: '3', email: 'new@test.com', status: 'ACTIVE', roles: [] }),
+    deactivateUser: () => of(undefined),
+    reactivateUser: () => of(undefined)
   };
 
   beforeEach(async () => {
@@ -92,5 +104,24 @@ describe('SettingsContainerComponent', () => {
     expect(component.isDarkMode()).toBeTrue();
     expect(mockBody.classList.contains('dark-theme')).toBeTrue();
     expect(mockBody.classList.contains('light-theme')).toBeFalse();
+  });
+
+  it('should render roles in the left panel', () => {
+    component.setTab('roles');
+    fixture.detectChanges();
+
+    const roleRows = fixture.debugElement.queryAll(By.css('.role-item-row'));
+    expect(roleRows.length).toBe(1);
+    expect(roleRows[0].nativeElement.textContent).toContain('ACCOUNTANT');
+  });
+
+  it('should render permissions checklist', () => {
+    component.setTab('roles');
+    fixture.detectChanges();
+
+    const checkRows = fixture.debugElement.queryAll(By.css('.checkbox-row'));
+    expect(checkRows.length).toBe(2);
+    expect(checkRows[0].nativeElement.textContent).toContain('JOURNAL_READ');
+    expect(checkRows[1].nativeElement.textContent).toContain('JOURNAL_WRITE');
   });
 });

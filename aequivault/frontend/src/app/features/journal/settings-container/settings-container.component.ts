@@ -228,7 +228,7 @@ import { RbacService, PermissionResponse, RoleResponse, UserResponse } from '../
                   {{ t('coa.cancel') }}
                 </button>
                 <button type="submit" class="btn btn-primary">
-                  💾 {{ t('coa.create_group') }}
+                  💾 {{ selectedRole() ? t('settings.btn_edit_role') : t('settings.btn_create_role') }}
                 </button>
               </div>
             </form>

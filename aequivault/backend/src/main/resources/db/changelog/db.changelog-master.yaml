@@ -19,5 +19,7 @@ databaseChangeLog:
       file: db/changelog/migrations/009-notifications.sql
   - include:
       file: db/changelog/migrations/010-rbac-audit.sql
+  - include:
+      file: db/changelog/migrations/011-rbac-seed.sql
 
 
