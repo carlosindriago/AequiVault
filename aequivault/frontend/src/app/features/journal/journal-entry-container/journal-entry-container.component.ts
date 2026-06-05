@@ -161,6 +161,14 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
           </div>
 
           <div class="header-actions">
+            <!-- Ephemeral Demo Badge -->
+            @if (isDemoSession()) {
+              <div class="demo-badge" [title]="demoBadgeTitle()">
+                <span class="demo-badge-icon">⏱</span>
+                <span class="demo-badge-text">Modo Demo · Expira en {{ demoRemainingLabel() }}</span>
+              </div>
+            }
+
             <!-- Language Selector Dropdown -->
             <div class="lang-selector-container">
               <select 
@@ -269,6 +277,20 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
                 }
               </ul>
             }
+          </div>
+        }
+
+        <!-- Ephemeral Demo Banner -->
+        @if (isDemoSession()) {
+          <div class="demo-session-banner">
+            <span class="demo-session-icon">🚀</span>
+            <div class="demo-session-content">
+              <strong>Modo Demo Efímero</strong>
+              <span class="demo-session-detail">
+                Estás operando dentro de un sandbox con datos contables. Expira automáticamente
+                <strong>{{ demoRemainingLabel() }}</strong> ({{ demoAbsoluteExpiry() }}).
+              </span>
+            </div>
           </div>
         }
 
@@ -1040,6 +1062,71 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
       from { opacity: 0; transform: translateY(-10px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
+    /* Ephemeral demo session indicators */
+    .demo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.85rem;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(52, 211, 153, 0.18) 0%, rgba(99, 102, 241, 0.18) 100%);
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      color: #d1fae5;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      box-shadow: 0 6px 16px -10px rgba(52, 211, 153, 0.5);
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .demo-badge-icon {
+      font-size: 0.9rem;
+      filter: drop-shadow(0 0 4px rgba(52, 211, 153, 0.55));
+    }
+
+    .demo-badge-text {
+      white-space: nowrap;
+    }
+
+    .demo-session-banner {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 0.85rem 1.1rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, rgba(52, 211, 153, 0.12) 0%, rgba(99, 102, 241, 0.12) 100%);
+      border: 1px solid rgba(52, 211, 153, 0.35);
+      color: #ecfdf5;
+      font-size: 0.85rem;
+      box-shadow: 0 8px 24px -14px rgba(52, 211, 153, 0.4);
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .demo-session-icon {
+      font-size: 1.3rem;
+      filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.5));
+    }
+
+    .demo-session-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      text-align: left;
+    }
+
+    .demo-session-content strong {
+      color: #ffffff;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .demo-session-detail {
+      color: rgba(209, 250, 229, 0.85);
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
   `]
 })
 export class JournalEntryContainerComponent implements OnInit, OnDestroy {
@@ -1055,8 +1142,43 @@ export class JournalEntryContainerComponent implements OnInit, OnDestroy {
   isProfileMenuOpen = signal<boolean>(false);
   isNotificationMenuOpen = signal<boolean>(false);
 
+  // Tick signal that increments every minute to refresh the demo remaining-time label.
+  private demoClockTick = signal<number>(Date.now());
+
   notifications = this.notificationService.unreadNotifications;
   unreadCount = computed(() => this.notifications().length);
+
+  isDemoSession = computed(() => this.authService.isDemoSession());
+
+  demoRemainingLabel = computed(() => {
+    const expiresAt = this.authService.demoExpiresAt();
+    if (!expiresAt) return 'pronto';
+    const expiry = new Date(expiresAt).getTime();
+    if (Number.isNaN(expiry)) return 'pronto';
+    // depend on the tick so it auto-updates without manual recomputation
+    void this.demoClockTick();
+    const diffMs = expiry - Date.now();
+    if (diffMs <= 0) return '0 min';
+    const totalMinutes = Math.floor(diffMs / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours <= 0) return `${minutes} min`;
+    if (minutes === 0) return `${hours} h`;
+    return `${hours} h ${minutes} min`;
+  });
+
+  demoAbsoluteExpiry = computed(() => {
+    const expiresAt = this.authService.demoExpiresAt();
+    if (!expiresAt) return '';
+    const expiry = new Date(expiresAt);
+    if (Number.isNaN(expiry.getTime())) return '';
+    return expiry.toLocaleString();
+  });
+
+  demoBadgeTitle = computed(() => {
+    const absolute = this.demoAbsoluteExpiry();
+    return absolute ? `Sandbox demo · expira ${absolute}` : 'Sandbox demo';
+  });
 
   userName = computed(() => {
     const email = this.authService.currentUser()?.email || '';
@@ -1103,16 +1225,21 @@ export class JournalEntryContainerComponent implements OnInit, OnDestroy {
   ) {}
 
   private pollingIntervalId: any;
+  private demoClockIntervalId: any;
 
   ngOnInit() {
     this.fetchAccounts();
     this.loadNotifications();
     this.startNotificationPolling();
+    this.startDemoClockTicker();
   }
 
   ngOnDestroy() {
     if (this.pollingIntervalId) {
       clearInterval(this.pollingIntervalId);
+    }
+    if (this.demoClockIntervalId) {
+      clearInterval(this.demoClockIntervalId);
     }
   }
 
@@ -1126,6 +1253,13 @@ export class JournalEntryContainerComponent implements OnInit, OnDestroy {
     this.pollingIntervalId = setInterval(() => {
       this.loadNotifications();
     }, 10000); // Poll every 10 seconds
+  }
+
+  startDemoClockTicker() {
+    // Refresh the demo remaining-time label every 30 seconds while a demo session is active.
+    this.demoClockIntervalId = setInterval(() => {
+      this.demoClockTick.set(Date.now());
+    }, 30000);
   }
 
   toggleNotificationMenu() {

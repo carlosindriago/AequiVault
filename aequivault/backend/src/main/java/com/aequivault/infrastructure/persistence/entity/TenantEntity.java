@@ -20,6 +20,9 @@ public class TenantEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "expires_at")
+    private LocalDateTime expiresAt;
+
     public TenantEntity() {}
 
     public TenantEntity(UUID id, String name) {
@@ -50,5 +53,13 @@ public class TenantEntity {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
     }
 }

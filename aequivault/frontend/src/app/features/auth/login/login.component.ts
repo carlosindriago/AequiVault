@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { DemoService } from '../../../core/services/demo.service';
 
 @Component({
   selector: 'app-login',
@@ -29,14 +30,39 @@ import { AuthService } from '../../../core/services/auth.service';
           <p class="brand-subtitle">Ingreso al Sistema de Contabilidad</p>
         </div>
 
-        <form (submit)="onSubmit($event)" class="auth-form">
-          @if (errorMessage()) {
-            <div class="error-banner">
-              <span class="error-icon">⚠️</span>
-              <span class="error-text">{{ errorMessage() }}</span>
-            </div>
-          }
+        @if (errorMessage()) {
+          <div class="error-banner">
+            <span class="error-icon">⚠️</span>
+            <span class="error-text">{{ errorMessage() }}</span>
+          </div>
+        }
 
+        <!-- Live Demo CTA -->
+        <button
+          type="button"
+          class="btn-live-demo"
+          [disabled]="isDemoLoading() || isLoading()"
+          (click)="onTryLiveDemo()"
+        >
+          <span class="demo-icon">🚀</span>
+          <span class="demo-label">
+            @if (isDemoLoading()) {
+              <span class="spinner"></span>
+              Cargando demo...
+            } @else {
+              Try Live Demo
+            }
+          </span>
+          <span class="demo-sublabel">Sandbox con datos contables · 2 horas</span>
+        </button>
+
+        <div class="divider">
+          <span class="divider-line"></span>
+          <span class="divider-text">o ingresa con tus credenciales</span>
+          <span class="divider-line"></span>
+        </div>
+
+        <form (submit)="onSubmit($event)" class="auth-form">
           <div class="input-group">
             <label for="email" class="input-label">Correo Electrónico</label>
             <input
@@ -135,7 +161,7 @@ import { AuthService } from '../../../core/services/auth.service';
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-bottom: 2.5rem;
+      margin-bottom: 2rem;
     }
 
     .logo-icon {
@@ -160,12 +186,6 @@ import { AuthService } from '../../../core/services/auth.service';
       margin-bottom: 0;
     }
 
-    .auth-form {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-
     .error-banner {
       display: flex;
       align-items: center;
@@ -176,6 +196,90 @@ import { AuthService } from '../../../core/services/auth.service';
       border-radius: 10px;
       color: #fca5a5;
       font-size: 0.85rem;
+      margin-bottom: 1.25rem;
+    }
+
+    /* Live Demo CTA */
+    .btn-live-demo {
+      position: relative;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      padding: 1rem 1.25rem;
+      border-radius: 14px;
+      border: 1.5px solid rgba(52, 211, 153, 0.45);
+      background: linear-gradient(135deg, rgba(52, 211, 153, 0.18) 0%, rgba(99, 102, 241, 0.18) 100%);
+      color: #ecfdf5;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      box-shadow: 0 12px 24px -16px rgba(52, 211, 153, 0.45);
+      margin-bottom: 1.5rem;
+    }
+
+    .btn-live-demo:hover:not(:disabled) {
+      transform: translateY(-1px);
+      border-color: rgba(52, 211, 153, 0.7);
+      box-shadow: 0 16px 32px -14px rgba(52, 211, 153, 0.55);
+    }
+
+    .btn-live-demo:disabled {
+      opacity: 0.7;
+      cursor: progress;
+    }
+
+    .demo-icon {
+      position: absolute;
+      left: 1.25rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.5rem;
+      filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.45));
+    }
+
+    .demo-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1rem;
+      letter-spacing: 0.01em;
+    }
+
+    .demo-sublabel {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: rgba(167, 243, 208, 0.85);
+      letter-spacing: 0.01em;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.12) 50%, rgba(255, 255, 255, 0) 100%);
+    }
+
+    .divider-text {
+      color: #64748b;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 500;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
     }
 
     .input-group {
@@ -256,12 +360,45 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class LoginComponent {
   private authService = inject(AuthService);
+  private demoService = inject(DemoService);
   private router = inject(Router);
 
   readonly email = signal<string>('');
   readonly password = signal<string>('');
   readonly isLoading = signal<boolean>(false);
+  readonly isDemoLoading = signal<boolean>(false);
   readonly errorMessage = signal<string | null>(null);
+
+  onTryLiveDemo(): void {
+    if (this.isDemoLoading() || this.isLoading()) {
+      return;
+    }
+
+    this.isDemoLoading.set(true);
+    this.errorMessage.set(null);
+
+    this.demoService.startDemo().subscribe({
+      next: (response) => {
+        this.authService.adoptDemoSession(response);
+        this.isDemoLoading.set(false);
+        this.router.navigate(['/']);
+      },
+      error: (err) => {
+        this.isDemoLoading.set(false);
+        if (err?.status === 429) {
+          this.errorMessage.set('Has alcanzado el límite de demos por hora. Intenta más tarde.');
+        } else if (err?.status === 404 || err?.status === 503) {
+          this.errorMessage.set('El modo demo no está habilitado en este servidor.');
+        } else if (err?.error?.detail) {
+          this.errorMessage.set(err.error.detail);
+        } else if (err?.error?.message) {
+          this.errorMessage.set(err.error.message);
+        } else {
+          this.errorMessage.set('No se pudo crear el entorno demo. Intenta nuevamente.');
+        }
+      }
+    });
+  }
 
   onSubmit(event: Event): void {
     event.preventDefault();

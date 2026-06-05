@@ -21,5 +21,6 @@ databaseChangeLog:
       file: db/changelog/migrations/010-rbac-audit.sql
   - include:
       file: db/changelog/migrations/011-rbac-seed.sql
-
+  - include:
+      file: db/changelog/migrations/012-ephemeral-demo.sql
 

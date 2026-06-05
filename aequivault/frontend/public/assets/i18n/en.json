@@ -228,5 +228,17 @@
   "notifications": {
     "title": "Notifications",
     "empty": "No new notifications"
+  },
+  "demo": {
+    "try_live_demo": "Try Live Demo",
+    "try_live_demo_sublabel": "Sandbox with accounting data · 2 hours",
+    "loading_demo": "Creating demo environment...",
+    "rate_limited": "You have reached the demo creation limit per hour. Try again later.",
+    "not_enabled": "The demo mode is not enabled on this server.",
+    "generic_error": "Could not create the demo environment. Please try again.",
+    "mode_badge": "Demo Mode · Expires in {time}",
+    "mode_badge_title": "Sandbox demo · expires {absolute}",
+    "banner_title": "Ephemeral Demo Mode",
+    "banner_detail": "You are operating inside a sandbox with realistic accounting data. It will expire automatically in {time} ({absolute})."
   }
 }

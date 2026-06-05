@@ -50,6 +50,8 @@ describe('JournalEntryContainerComponent', () => {
 
     const mockAuthService = {
       currentUser: signal({ email: 'admin@corporacionalpha.com', tenantId: '212f7927-ed0d-495c-b39b-94364d5e2f9b' }),
+      isDemoSession: signal(false),
+      demoExpiresAt: signal<string | null>(null),
       logout: jasmine.createSpy('logout')
     };
 
