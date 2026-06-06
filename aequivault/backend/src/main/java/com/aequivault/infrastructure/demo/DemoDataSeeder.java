@@ -54,12 +54,12 @@ public class DemoDataSeeder {
 
     private Map<String, AccountGroupEntity> createAccountGroups(UUID tenantId) {
         List<AccountGroupEntity> groups = List.of(
-                new AccountGroupEntity(UUID.randomUUID(), tenantId, "Assets", "1", "assets"),
-                new AccountGroupEntity(UUID.randomUUID(), tenantId, "Current Assets", "11", "assets.current"),
-                new AccountGroupEntity(UUID.randomUUID(), tenantId, "Liabilities", "2", "liabilities"),
-                new AccountGroupEntity(UUID.randomUUID(), tenantId, "Equity", "3", "equity"),
-                new AccountGroupEntity(UUID.randomUUID(), tenantId, "Revenue", "4", "revenue"),
-                new AccountGroupEntity(UUID.randomUUID(), tenantId, "Expenses", "5", "expenses")
+                new AccountGroupEntity(UUID.randomUUID(), tenantId, "Assets", "1", "1"),
+                new AccountGroupEntity(UUID.randomUUID(), tenantId, "Current Assets", "11", "1.1"),
+                new AccountGroupEntity(UUID.randomUUID(), tenantId, "Liabilities", "2", "2"),
+                new AccountGroupEntity(UUID.randomUUID(), tenantId, "Equity", "3", "3"),
+                new AccountGroupEntity(UUID.randomUUID(), tenantId, "Revenue", "4", "4"),
+                new AccountGroupEntity(UUID.randomUUID(), tenantId, "Expenses", "5", "5")
         );
         accountGroupRepository.saveAll(groups);
 
