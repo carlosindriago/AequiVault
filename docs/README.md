@@ -12,7 +12,7 @@ This directory contains the complete technical documentation for AequiVault. All
 
 | Document | Description | Status |
 |----------|-------------|--------|
-| [Architecture Decision Records (ADRs)](adr/README.md) | Log of significant architectural decisions with context and consequences | ✅ |
+| [Architecture Decision Records (ADRs)](adr/) | Log of significant architectural decisions with context and consequences | ✅ |
 | [Project Plan & Architecture](plan_proyecto_contable.md) | Full system design, domain model, DB schema, API surface, and deployment strategy | ✅ |
 
 ### 📜 Business Rules & Standards
@@ -33,6 +33,12 @@ This directory contains the complete technical documentation for AequiVault. All
 |-----|-------|--------|
 | [ADR-001](adr/adr-001-setup-and-auth.md) | Identity System (AuthN) and Setup Bootstrapping Pattern | ✅ Accepted |
 | [ADR-002](adr/adr-002-financial-reports-and-dx.md) | Hierarchical Financial Reports Engine, Swagger UI and DX | ✅ Accepted |
+
+### 🔒 Security
+
+| Document | Description | Status |
+|----------|-------------|--------|
+| [Security Policy](../SECURITY.md) | Vulnerability reporting process, security layers, and compliance overview | ✅ |
 
 ---
 
