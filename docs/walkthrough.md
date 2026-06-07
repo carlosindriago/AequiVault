@@ -10,15 +10,15 @@ We developed and integrated the REST API layer for AequiVault in Spring Boot, pr
 
 ### Backend Changes
 1. **Domain Modeling**:
-   * [LedgerAccount.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/main/java/com/aequivault/domain/model/LedgerAccount.java): Pure domain model without persistence or Spring framework annotations.
-   * [LedgerAccountRepositoryImpl.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/main/java/com/aequivault/infrastructure/persistence/repository/LedgerAccountRepositoryImpl.java): Infrastructure-to-domain mapper utilizing MapStruct.
+   * `aequivault/backend/src/main/java/com/aequivault/domain/model/LedgerAccount.java`: Pure domain model without persistence or Spring framework annotations.
+   * `aequivault/backend/src/main/java/com/aequivault/infrastructure/persistence/repository/LedgerAccountRepositoryImpl.java`: Infrastructure-to-domain mapper utilizing MapStruct.
 2. **Contracts (DTOs)**:
-   * [JournalEntryRequest.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/main/java/com/aequivault/infrastructure/web/dto/JournalEntryRequest.java): Flat entry payload mapping input lines with explicit designations for `DEBIT` or `CREDIT` types.
+   * `aequivault/backend/src/main/java/com/aequivault/infrastructure/web/dto/JournalEntryRequest.java`: Flat entry payload mapping input lines with explicit designations for `DEBIT` or `CREDIT` types.
 3. **REST Controllers**:
-   * [LedgerAccountController.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/main/java/com/aequivault/infrastructure/web/LedgerAccountController.java): Exposing the Chart of Accounts (COA) catalog under RLS isolation.
-   * [JournalEntryController.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/main/java/com/aequivault/infrastructure/web/JournalEntryController.java): Posting temporary drafts (`DRAFT`) or immutable posted transactions (`POSTED`).
+   * `aequivault/backend/src/main/java/com/aequivault/infrastructure/web/LedgerAccountController.java`: Exposing the Chart of Accounts (COA) catalog under RLS isolation.
+   * `aequivault/backend/src/main/java/com/aequivault/infrastructure/web/JournalEntryController.java`: Posting temporary drafts (`DRAFT`) or immutable posted transactions (`POSTED`).
 4. **Global Error Handling (RFC 7807)**:
-   * [GlobalExceptionHandler.java](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/backend/src/main/java/com/aequivault/infrastructure/web/exception/GlobalExceptionHandler.java): Standardized error mapping, routing business validation failures to `422 Unprocessable Entity` and syntax validation issues to `400 Bad Request`.
+   * `aequivault/backend/src/main/java/com/aequivault/infrastructure/web/exception/GlobalExceptionHandler.java`: Standardized error mapping, routing business validation failures to `422 Unprocessable Entity` and syntax validation issues to `400 Bad Request`.
 
 ---
 
@@ -28,16 +28,16 @@ We designed and implemented the frontend client in Angular 18, utilizing the Sma
 
 ### Frontend Changes
 1. **Design and Premium Aesthetics**:
-   * [styles.scss](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/frontend/src/styles.scss): Core styles introducing variable CSS tokens for **Glassmorphism**, Google Fonts' **Outfit** typography, custom scrollbars, and a financial-grade color palette (Emerald Green for balanced states, Coral Red for alerts).
+   * `aequivault/frontend/src/styles.scss`: Core styles introducing variable CSS tokens for **Glassmorphism**, Google Fonts' **Outfit** typography, custom scrollbars, and a financial-grade color palette (Emerald Green for balanced states, Coral Red for alerts).
 2. **Reactive Core with Signals**:
-   * [journal-entry-state.service.ts](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/frontend/src/app/core/services/journal-entry-state.service.ts): Local state service exposing reactive signals. Avoids RxJS overhead in visual bindings. Updates lines immutably (`[...current, newLine]`).
+   * `aequivault/frontend/src/app/core/services/journal-entry-state.service.ts`: Local state service exposing reactive signals. Avoids RxJS overhead in visual bindings. Updates lines immutably (`[...current, newLine]`).
    * **Calculations**: Computes `debitSum()`, `creditSum()`, and `difference()` (rounded to 4 decimal places to prevent float precision drift) reactively. Enables submission buttons only when `canSubmit()` yields `true`.
 3. **Component Scaffolding**:
-   * [journal-line-table.component.ts](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/frontend/src/app/features/journal/components/journal-line-table/journal-line-table.component.ts): Renders the interactive grid and hosts styled native selectors to search the accounts list.
-   * [journal-entry-summary.component.ts](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/frontend/src/app/features/journal/components/journal-entry-summary/journal-entry-summary.component.ts): Renders real-time debit/credit totals and balance alerts.
-   * [journal-entry-form.component.ts](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/frontend/src/app/features/journal/components/journal-entry-form/journal-entry-form.component.ts): Collects transaction date, currency selections, and the entry number.
+   * `aequivault/frontend/src/app/features/journal/components/journal-line-table/journal-line-table.component.ts`: Renders the interactive grid and hosts styled native selectors to search the accounts list.
+   * `aequivault/frontend/src/app/features/journal/components/journal-entry-summary/journal-entry-summary.component.ts`: Renders real-time debit/credit totals and balance alerts.
+   * `aequivault/frontend/src/app/features/journal/components/journal-entry-form/journal-entry-form.component.ts`: Collects transaction date, currency selections, and the entry number.
 4. **Smart Container**:
-   * [journal-entry-container.component.ts](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/aequivault/frontend/src/app/features/journal/journal-entry-container/journal-entry-container.component.ts): Coordinates account loading, active tenant transitions, and API submission. Injects the `X-Tenant-ID` header dynamically on every HTTP request.
+   * `aequivault/frontend/src/app/features/journal/journal-entry-container/journal-entry-container.component.ts`: Coordinates account loading, active tenant transitions, and API submission. Injects the `X-Tenant-ID` header dynamically on every HTTP request.
 
 ### Frontend Test Suite Results
 All 27 original frontend tests passed successfully:
