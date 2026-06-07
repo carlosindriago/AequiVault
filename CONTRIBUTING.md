@@ -8,7 +8,7 @@ To maintain AequiVault as a highly respected, production-ready, and enterprise-g
 
 ## Code of Conduct
 
-By participating in this project, you agree to abide by our [Code of Conduct](file:///home/carlos/Proyectos/siste%20contador-libro%20mayor/CODE_OF_CONDUCT.md). Please report any unacceptable behavior to the project maintainers.
+By participating in this project, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md). Please report any unacceptable behavior to the project maintainers.
 
 ---
 
@@ -48,7 +48,7 @@ AequiVault is designed with the highest standards of software engineering. Every
 
 ### Prerequisites
 * **Java**: JDK 21 (LTS)
-* **Node.js**: v22+
+* **Node.js**: v20+
 * **Docker**: For running PostgreSQL database container
 * **Angular CLI**: v18+
 
