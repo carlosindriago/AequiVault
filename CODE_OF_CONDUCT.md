@@ -42,6 +42,6 @@ All community leaders are obligated to respect the privacy and security of the r
 
 ## Attribution
 
-This Code of Conduct is adapted from the Contributor Covenant, version 2.1, available at [https://www.contributorcovenant.org/version/2/1/code_of_conduct.html](https://www.contributorcovenant.org/version/2/1/code_of_conduct.html).
+This Code of Conduct is adapted from the Contributor Covenant, version 2.1, available at [https://www.contributor-covenant.org/version/2/1/code_of_conduct.html](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html).
 
 Feedback and suggestions can be directed to the project maintainers.
