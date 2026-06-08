@@ -1,15 +1,16 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
 import { DemoStartResponse } from '../models/auth.model';
+import { ConfigService } from './config.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DemoService {
   private http = inject(HttpClient);
-  private baseUrl = environment.apiUrl;
+  private configService = inject(ConfigService);
+  private get baseUrl() { return this.configService.apiUrl; }
 
   /**
    * Starts an ephemeral demo tenant on the backend.

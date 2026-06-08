@@ -1,8 +1,8 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { ConfigService } from './config.service';
 
 export interface PermissionResponse {
   id: string;
@@ -46,7 +46,8 @@ export interface UserStatusChangeRequest {
 })
 export class RbacService {
   private http = inject(HttpClient);
-  private baseUrl = environment.apiUrl;
+  private configService = inject(ConfigService);
+  private get baseUrl() { return this.configService.apiUrl; }
 
   readonly permissions = signal<PermissionResponse[]>([]);
   readonly roles = signal<RoleResponse[]>([]);

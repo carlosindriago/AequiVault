@@ -1,16 +1,19 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { JournalEntryRequest, JournalEntryResponse } from '../models/journal-entry.model';
-import { environment } from '../../../environments/environment';
+import { ConfigService } from './config.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class JournalService {
-  private apiUrl = `${environment.apiUrl}/journal/entries`;
+  private http = inject(HttpClient);
+  private configService = inject(ConfigService);
 
-  constructor(private http: HttpClient) {}
+  private get apiUrl() { return `${this.configService.apiUrl}/journal/entries`; }
+
+  constructor() {}
 
   createEntry(entry: JournalEntryRequest, tenantId: string): Observable<JournalEntryResponse> {
     return this.http.post<JournalEntryResponse>(this.apiUrl, entry);

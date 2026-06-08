@@ -1,18 +1,21 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { LedgerAccountDto } from '../models/ledger-account.model';
 import { AccountGroupDto, AccountGroupRequest } from '../models/account-group.model';
-import { environment } from '../../../environments/environment';
+import { ConfigService } from './config.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AccountService {
-  private accountsUrl = `${environment.apiUrl}/ledger/accounts`;
-  private groupsUrl = `${environment.apiUrl}/ledger/groups`;
+  private http = inject(HttpClient);
+  private configService = inject(ConfigService);
 
-  constructor(private http: HttpClient) {}
+  private get accountsUrl() { return `${this.configService.apiUrl}/ledger/accounts`; }
+  private get groupsUrl() { return `${this.configService.apiUrl}/ledger/groups`; }
+
+  constructor() {}
 
   getAccounts(tenantId: string): Observable<LedgerAccountDto[]> {
     return this.http.get<LedgerAccountDto[]>(this.accountsUrl);

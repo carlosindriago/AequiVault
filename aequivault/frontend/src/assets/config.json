@@ -1,0 +1,8 @@
+{
+  "apiUrl": "/api/v1",
+  "roles": {
+    "admin": "ADMIN",
+    "accountant": "ACCOUNTANT",
+    "viewer": "VIEWER"
+  }
+}

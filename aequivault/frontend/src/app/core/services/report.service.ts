@@ -1,18 +1,21 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { TrialBalanceReportDto, FinancialReportDto } from '../models/report.model';
-import { environment } from '../../../environments/environment';
+import { ConfigService } from './config.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ReportService {
-  private trialBalanceUrl = `${environment.apiUrl}/reports/trial-balance`;
-  private balanceSheetUrl = `${environment.apiUrl}/reports/balance-sheet`;
-  private profitAndLossUrl = `${environment.apiUrl}/reports/profit-and-loss`;
+  private http = inject(HttpClient);
+  private configService = inject(ConfigService);
 
-  constructor(private http: HttpClient) {}
+  private get trialBalanceUrl() { return `${this.configService.apiUrl}/reports/trial-balance`; }
+  private get balanceSheetUrl() { return `${this.configService.apiUrl}/reports/balance-sheet`; }
+  private get profitAndLossUrl() { return `${this.configService.apiUrl}/reports/profit-and-loss`; }
+
+  constructor() {}
 
   getTrialBalance(tenantId: string, startDate: string, endDate: string): Observable<TrialBalanceReportDto> {
     const params = new HttpParams()

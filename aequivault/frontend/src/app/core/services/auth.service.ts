@@ -1,9 +1,9 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { SetupInitRequest, SetupInitResponse, LoginRequest, LoginResponse, SetupStatusResponse, DemoStartResponse } from '../models/auth.model';
+import { ConfigService } from './config.service';
 
 const TOKEN_KEY = 'aequivault_token';
 const EMAIL_KEY = 'aequivault_user_email';
@@ -16,7 +16,8 @@ const DEMO_FLAG_KEY = 'aequivault_demo_mode';
 })
 export class AuthService {
   private http = inject(HttpClient);
-  private baseUrl = environment.apiUrl;
+  private configService = inject(ConfigService);
+  private get baseUrl() { return this.configService.apiUrl; }
 
   readonly isAuthenticated = signal<boolean>(false);
   readonly currentUser = signal<{ email: string; tenantId: string } | null>(null);

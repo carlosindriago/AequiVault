@@ -1,16 +1,19 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { LedgerReportDto } from '../models/ledger.model';
-import { environment } from '../../../environments/environment';
+import { ConfigService } from './config.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class LedgerService {
-  private baseUrl = `${environment.apiUrl}/ledger`;
+  private http = inject(HttpClient);
+  private configService = inject(ConfigService);
 
-  constructor(private http: HttpClient) {}
+  private get baseUrl() { return `${this.configService.apiUrl}/ledger`; }
+
+  constructor() {}
 
   getLedgerReport(tenantId: string, accountId: string, startDate: string, endDate: string): Observable<LedgerReportDto> {
     const params = new HttpParams()

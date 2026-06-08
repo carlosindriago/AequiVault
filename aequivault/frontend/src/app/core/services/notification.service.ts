@@ -1,8 +1,8 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { ConfigService } from './config.service';
 
 export interface Notification {
   id: string;
@@ -19,7 +19,8 @@ export interface Notification {
 })
 export class NotificationService {
   private http = inject(HttpClient);
-  private baseUrl = `${environment.apiUrl}/notifications`;
+  private configService = inject(ConfigService);
+  private get baseUrl() { return `${this.configService.apiUrl}/notifications`; }
 
   readonly unreadNotifications = signal<Notification[]>([]);
 

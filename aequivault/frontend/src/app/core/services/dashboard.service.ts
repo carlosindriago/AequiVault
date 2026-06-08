@@ -1,16 +1,19 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { DashboardDto } from '../models/dashboard.model';
-import { environment } from '../../../environments/environment';
+import { ConfigService } from './config.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DashboardService {
-  private dashboardUrl = `${environment.apiUrl}/dashboard`;
+  private http = inject(HttpClient);
+  private configService = inject(ConfigService);
 
-  constructor(private http: HttpClient) {}
+  private get dashboardUrl() { return `${this.configService.apiUrl}/dashboard`; }
+
+  constructor() {}
 
   getDashboard(tenantId: string, startDate: string, endDate: string, cashAccountId: string): Observable<DashboardDto> {
     const params = new HttpParams()

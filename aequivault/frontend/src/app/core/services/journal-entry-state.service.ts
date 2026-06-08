@@ -54,8 +54,10 @@ export class JournalEntryStateService {
     }
 
     if (this.status() === 'DRAFT') {
-      // Para borradores: al menos debe tener cuentas asignadas a las líneas creadas
-      return currentLines.every(l => l.ledgerAccountId !== '');
+      const allLinesValid = currentLines.every(l =>
+        l.ledgerAccountId !== '' && l.amount !== null && l.amount > 0
+      );
+      return allLinesValid;
     } else {
       // Para definitivos (POSTED): debe tener número de asiento, estar balanceado, y todas las líneas válidas
       const hasNumber = !!this.entryNumber() && this.entryNumber().trim() !== '';
