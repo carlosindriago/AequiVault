@@ -53,12 +53,23 @@ class JournalEntryControllerTest {
     @Autowired
     private PlatformTransactionManager transactionManager;
 
+    @Autowired
+    private com.aequivault.infrastructure.security.JwtService jwtService;
+
     private TransactionTemplate transactionTemplate;
 
     private UUID tenantAId;
     private UUID tenantBId;
     private UUID accountA1Id;
     private UUID accountA2Id;
+
+    private String getTenantAToken() {
+        return jwtService.generateToken("user@tenantA.com", tenantAId, java.util.Collections.emptySet());
+    }
+
+    private String getTenantBToken() {
+        return jwtService.generateToken("user@tenantB.com", tenantBId, java.util.Collections.emptySet());
+    }
 
     @BeforeEach
     void setUp() {
@@ -136,7 +147,7 @@ class JournalEntryControllerTest {
                 """.formatted(accountA1Id);
 
         mockMvc.perform(post("/api/v1/journal/entries")
-                        .header("X-Tenant-ID", tenantAId.toString())
+                        .header("Authorization", "Bearer " + getTenantAToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(draftPayload))
                 .andExpect(status().isCreated())
@@ -173,7 +184,7 @@ class JournalEntryControllerTest {
 
         // 1. Post entry successfully
         mockMvc.perform(post("/api/v1/journal/entries")
-                        .header("X-Tenant-ID", tenantAId.toString())
+                        .header("Authorization", "Bearer " + getTenantAToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(postedPayload))
                 .andExpect(status().isCreated())
@@ -184,7 +195,7 @@ class JournalEntryControllerTest {
 
         // 2. Fetch entry successfully
         mockMvc.perform(get("/api/v1/journal/entries/" + entryId)
-                        .header("X-Tenant-ID", tenantAId.toString()))
+                        .header("Authorization", "Bearer " + getTenantAToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(entryId.toString()))
                 .andExpect(jsonPath("$.status").value("POSTED"))
@@ -192,7 +203,7 @@ class JournalEntryControllerTest {
 
         // 3. Verify RLS isolation: Tenant B trying to fetch Tenant A's entry must get 404
         mockMvc.perform(get("/api/v1/journal/entries/" + entryId)
-                        .header("X-Tenant-ID", tenantBId.toString()))
+                        .header("Authorization", "Bearer " + getTenantBToken()))
                 .andExpect(status().isNotFound());
     }
 
@@ -221,7 +232,7 @@ class JournalEntryControllerTest {
                 """.formatted(accountA1Id, accountA2Id);
 
         mockMvc.perform(post("/api/v1/journal/entries")
-                        .header("X-Tenant-ID", tenantAId.toString())
+                        .header("Authorization", "Bearer " + getTenantAToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(unbalancedPayload))
                 .andExpect(status().isUnprocessableEntity())
@@ -254,7 +265,7 @@ class JournalEntryControllerTest {
                 """.formatted(accountA1Id, accountA2Id);
 
         mockMvc.perform(post("/api/v1/journal/entries")
-                        .header("X-Tenant-ID", tenantAId.toString())
+                        .header("Authorization", "Bearer " + getTenantAToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isUnprocessableEntity())

@@ -29,7 +29,7 @@ public class AccountGroupController {
     public ResponseEntity<AccountGroupResponse> createGroup(@Valid @RequestBody AccountGroupRequest request) {
         String tenantStr = TenantContext.getTenantId();
         if (tenantStr == null || tenantStr.isBlank()) {
-            throw new IllegalStateException("Tenant context is missing. Please provide X-Tenant-ID header.");
+            throw new IllegalStateException("Tenant context is missing. Unauthenticated request.");
         }
         UUID tenantId = UUID.fromString(tenantStr);
 
@@ -75,7 +75,7 @@ public class AccountGroupController {
     public ResponseEntity<List<AccountGroupResponse>> getAllGroups() {
         String tenantStr = TenantContext.getTenantId();
         if (tenantStr == null || tenantStr.isBlank()) {
-            throw new IllegalStateException("Tenant context is missing. Please provide X-Tenant-ID header.");
+            throw new IllegalStateException("Tenant context is missing. Unauthenticated request.");
         }
         UUID tenantId = UUID.fromString(tenantStr);
 
@@ -90,7 +90,7 @@ public class AccountGroupController {
     public ResponseEntity<Void> deleteGroup(@PathVariable("id") UUID id) {
         String tenantStr = TenantContext.getTenantId();
         if (tenantStr == null || tenantStr.isBlank()) {
-            throw new IllegalStateException("Tenant context is missing. Please provide X-Tenant-ID header.");
+            throw new IllegalStateException("Tenant context is missing. Unauthenticated request.");
         }
         UUID tenantId = UUID.fromString(tenantStr);
 

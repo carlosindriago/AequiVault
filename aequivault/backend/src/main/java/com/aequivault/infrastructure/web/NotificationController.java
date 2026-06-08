@@ -24,7 +24,7 @@ public class NotificationController {
     public ResponseEntity<List<NotificationEntity>> getUnreadNotifications() {
         String tenantStr = TenantContext.getTenantId();
         if (tenantStr == null || tenantStr.isBlank()) {
-            throw new IllegalStateException("Tenant context is missing. Please provide X-Tenant-ID header.");
+            throw new IllegalStateException("Tenant context is missing. Unauthenticated request.");
         }
         UUID tenantId = UUID.fromString(tenantStr);
         List<NotificationEntity> list = notificationRepository.findUnreadNotificationsByTenant(tenantId);
@@ -36,7 +36,7 @@ public class NotificationController {
     public ResponseEntity<Void> markAsRead(@PathVariable("id") UUID id) {
         String tenantStr = TenantContext.getTenantId();
         if (tenantStr == null || tenantStr.isBlank()) {
-            throw new IllegalStateException("Tenant context is missing. Please provide X-Tenant-ID header.");
+            throw new IllegalStateException("Tenant context is missing. Unauthenticated request.");
         }
         notificationRepository.findById(id).ifPresent(notification -> {
             notification.setRead(true);

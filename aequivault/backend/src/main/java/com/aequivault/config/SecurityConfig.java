@@ -1,6 +1,7 @@
 package com.aequivault.config;
 
 import com.aequivault.infrastructure.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -27,34 +28,18 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .cors(Customizer.withDefaults())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                .accessDeniedHandler((request, response, accessDeniedException) -> response.sendError(HttpServletResponse.SC_FORBIDDEN))
+            );
 
-        if (isTestEnvironment()) {
-            http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-                .addFilterBefore(new org.springframework.web.filter.OncePerRequestFilter() {
-                    @Override
-                    protected void doFilterInternal(jakarta.servlet.http.HttpServletRequest request,
-                                                    jakarta.servlet.http.HttpServletResponse response,
-                                                    jakarta.servlet.FilterChain filterChain)
-                            throws jakarta.servlet.ServletException, java.io.IOException {
-                        String tenantId = request.getHeader("X-Tenant-ID");
-                        if (tenantId != null && !tenantId.isBlank()) {
-                            com.aequivault.infrastructure.security.TenantContext.setTenantId(tenantId);
-                        }
-                        try {
-                            filterChain.doFilter(request, response);
-                        } finally {
-                            com.aequivault.infrastructure.security.TenantContext.clear();
-                        }
-                    }
-                }, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
-        } else {
-            http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/setup/**", "/api/v1/auth/login", "/api/demo/start", "/api/v1/demo/start", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        }
+        http.authorizeHttpRequests(auth -> auth
+            .requestMatchers("/api/v1/setup/**", "/api/v1/auth/login", "/api/demo/start", "/api/v1/demo/start", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+            .requestMatchers("/api/v1/users/**", "/api/v1/roles/**", "/api/v1/permissions/**").hasAuthority("SUPER_ADMIN")
+            .anyRequest().authenticated()
+        )
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -62,14 +47,5 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
-
-    private boolean isTestEnvironment() {
-        for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
-            if (element.getClassName().startsWith("org.junit.") || element.getClassName().startsWith("org.testng.")) {
-                return true;
-            }
-        }
-        return false;
     }
 }

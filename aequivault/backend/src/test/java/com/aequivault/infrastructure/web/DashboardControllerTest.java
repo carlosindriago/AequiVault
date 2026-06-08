@@ -50,6 +50,9 @@ class DashboardControllerTest {
     @Autowired
     private PlatformTransactionManager transactionManager;
 
+    @Autowired
+    private com.aequivault.infrastructure.security.JwtService jwtService;
+
     private TransactionTemplate transactionTemplate;
 
     private UUID tenantAId;
@@ -64,6 +67,10 @@ class DashboardControllerTest {
     private UUID accountRevenueAId;
     private UUID accountLiabilityAId;
     private UUID accountCashBId;
+
+    private String getTenantAToken() {
+        return jwtService.generateToken("user@tenantA.com", tenantAId, java.util.Collections.emptySet());
+    }
 
     @BeforeEach
     void setUp() {
@@ -194,7 +201,7 @@ class DashboardControllerTest {
         // - Mayo 15 al 19: saldo 650.0
         // - Mayo 20 al 31: saldo 620.0
         mockMvc.perform(get("/api/v1/dashboard")
-                        .header("X-Tenant-ID", tenantAId.toString())
+                        .header("Authorization", "Bearer " + getTenantAToken())
                         .param("startDate", queryStart.toString())
                         .param("endDate", queryEnd.toString())
                         .param("cashAccountId", accountCashAId.toString()))

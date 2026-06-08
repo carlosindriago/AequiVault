@@ -63,12 +63,19 @@ class UserControllerTest {
     @Autowired
     private jakarta.persistence.EntityManager entityManager;
 
+    @Autowired
+    private com.aequivault.infrastructure.security.JwtService jwtService;
+
     private TransactionTemplate transactionTemplate;
 
     private UUID tenantId;
     private UUID adminUserId;
     private UUID normalUserId;
     private UUID superAdminRoleId;
+
+    private String getAdminToken() {
+        return jwtService.generateToken("admin@test.com", tenantId, java.util.Set.of("SUPER_ADMIN"));
+    }
 
     @BeforeEach
     void setUp() {
@@ -131,15 +138,16 @@ class UserControllerTest {
 
     @Test
     void shouldReturnUnprocessableEntityWhenTenantHeaderIsMissing() throws Exception {
-        mockMvc.perform(get("/api/v1/users"))
+        mockMvc.perform(get("/api/v1/users")
+                        .with(user("admin@test.com").authorities(new org.springframework.security.core.authority.SimpleGrantedAuthority("SUPER_ADMIN"))))
                 .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.detail").value("Tenant context is missing. Please provide X-Tenant-ID header."));
+                .andExpect(jsonPath("$.detail").value("Tenant context is missing. Unauthenticated request."));
     }
 
     @Test
     void shouldGetUsers() throws Exception {
         mockMvc.perform(get("/api/v1/users")
-                        .header("X-Tenant-ID", tenantId.toString()))
+                        .header("Authorization", "Bearer " + getAdminToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[*].email", containsInAnyOrder("admin@test.com", "user@test.com")));
@@ -156,7 +164,7 @@ class UserControllerTest {
                 """.formatted(superAdminRoleId);
 
         mockMvc.perform(post("/api/v1/users")
-                        .header("X-Tenant-ID", tenantId.toString())
+                        .header("Authorization", "Bearer " + getAdminToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isCreated())
@@ -176,8 +184,7 @@ class UserControllerTest {
                 """;
 
         mockMvc.perform(post("/api/v1/users/" + normalUserId + "/deactivate")
-                        .with(user("admin@test.com").roles("SUPER_ADMIN"))
-                        .header("X-Tenant-ID", tenantId.toString())
+                        .header("Authorization", "Bearer " + getAdminToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isNoContent());
@@ -219,8 +226,7 @@ class UserControllerTest {
                 """;
 
         mockMvc.perform(post("/api/v1/users/" + normalUserId + "/reactivate")
-                        .with(user("admin@test.com").roles("SUPER_ADMIN"))
-                        .header("X-Tenant-ID", tenantId.toString())
+                        .header("Authorization", "Bearer " + getAdminToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isNoContent());
@@ -252,8 +258,7 @@ class UserControllerTest {
                 """;
 
         mockMvc.perform(post("/api/v1/users/" + normalUserId + "/deactivate")
-                        .with(user("admin@test.com").roles("SUPER_ADMIN"))
-                        .header("X-Tenant-ID", tenantId.toString())
+                        .header("Authorization", "Bearer " + getAdminToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isUnprocessableEntity());

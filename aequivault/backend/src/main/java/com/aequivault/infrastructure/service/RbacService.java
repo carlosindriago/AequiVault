@@ -176,7 +176,7 @@ public class RbacService {
     private UUID getActiveTenantId() {
         String tenantStr = TenantContext.getTenantId();
         if (tenantStr == null || tenantStr.isBlank()) {
-            throw new IllegalStateException("Tenant context is missing. Please provide X-Tenant-ID header.");
+            throw new IllegalStateException("Tenant context is missing. Unauthenticated request.");
         }
         return UUID.fromString(tenantStr);
     }

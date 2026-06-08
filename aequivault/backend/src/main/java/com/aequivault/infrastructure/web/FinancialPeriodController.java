@@ -20,7 +20,7 @@ public class FinancialPeriodController {
     public ResponseEntity<Void> closePeriod(@PathVariable int year, @PathVariable int month) {
         String tenantStr = TenantContext.getTenantId();
         if (tenantStr == null || tenantStr.isBlank()) {
-            throw new IllegalStateException("Tenant context is missing. Please provide X-Tenant-ID header.");
+            throw new IllegalStateException("Tenant context is missing. Unauthenticated request.");
         }
         UUID tenantId = UUID.fromString(tenantStr);
 
@@ -32,7 +32,7 @@ public class FinancialPeriodController {
     public ResponseEntity<Void> openPeriod(@PathVariable int year, @PathVariable int month) {
         String tenantStr = TenantContext.getTenantId();
         if (tenantStr == null || tenantStr.isBlank()) {
-            throw new IllegalStateException("Tenant context is missing. Please provide X-Tenant-ID header.");
+            throw new IllegalStateException("Tenant context is missing. Unauthenticated request.");
         }
         UUID tenantId = UUID.fromString(tenantStr);
 

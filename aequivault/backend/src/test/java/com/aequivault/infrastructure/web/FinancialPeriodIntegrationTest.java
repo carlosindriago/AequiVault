@@ -52,11 +52,18 @@ class FinancialPeriodIntegrationTest {
     @Autowired
     private PlatformTransactionManager transactionManager;
 
+    @Autowired
+    private com.aequivault.infrastructure.security.JwtService jwtService;
+
     private TransactionTemplate transactionTemplate;
 
     private UUID tenantId;
     private UUID accountDebitId;
     private UUID accountCreditId;
+
+    private String getTenantToken() {
+        return jwtService.generateToken("user@test.com", tenantId, java.util.Collections.emptySet());
+    }
 
     @BeforeEach
     void setUp() {
@@ -126,12 +133,12 @@ class FinancialPeriodIntegrationTest {
 
         // 1. Cerrar el periodo para mayo de 2026 (2026/05)
         mockMvc.perform(post("/api/v1/periods/2026/5/close")
-                        .header("X-Tenant-ID", tenantId.toString()))
+                        .header("Authorization", "Bearer " + getTenantToken()))
                 .andExpect(status().isOk());
 
         // 2. Intentar guardar el asiento: debe ser rechazado con 422
         mockMvc.perform(post("/api/v1/journal/entries")
-                        .header("X-Tenant-ID", tenantId.toString())
+                        .header("Authorization", "Bearer " + getTenantToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isUnprocessableEntity())
@@ -140,12 +147,12 @@ class FinancialPeriodIntegrationTest {
 
         // 3. Volver a abrir el periodo (2026/05)
         mockMvc.perform(post("/api/v1/periods/2026/5/open")
-                        .header("X-Tenant-ID", tenantId.toString()))
+                        .header("Authorization", "Bearer " + getTenantToken()))
                 .andExpect(status().isOk());
 
         // 4. Intentar guardar de nuevo: debe ser aceptado y retornar 201
         mockMvc.perform(post("/api/v1/journal/entries")
-                        .header("X-Tenant-ID", tenantId.toString())
+                        .header("Authorization", "Bearer " + getTenantToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isCreated())
@@ -181,14 +188,14 @@ class FinancialPeriodIntegrationTest {
 
         // 1. Crear el asiento en periodo abierto (mayo 2026 esta abierto por defecto)
         mockMvc.perform(post("/api/v1/journal/entries")
-                        .header("X-Tenant-ID", tenantId.toString())
+                        .header("Authorization", "Bearer " + getTenantToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payloadOpen))
                 .andExpect(status().isCreated());
 
         // 2. Cerrar el periodo para mayo de 2026
         mockMvc.perform(post("/api/v1/periods/2026/5/close")
-                        .header("X-Tenant-ID", tenantId.toString()))
+                        .header("Authorization", "Bearer " + getTenantToken()))
                 .andExpect(status().isOk());
 
         // 3. Intentar modificar el asiento cambiandole la fecha a junio de 2026 (que esta abierto)
@@ -216,7 +223,7 @@ class FinancialPeriodIntegrationTest {
                 """.formatted(entryId, accountDebitId, accountCreditId);
 
         mockMvc.perform(post("/api/v1/journal/entries")
-                        .header("X-Tenant-ID", tenantId.toString())
+                        .header("Authorization", "Bearer " + getTenantToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payloadModifiedDate))
                 .andExpect(status().isUnprocessableEntity())

@@ -47,11 +47,22 @@ class AccountGroupControllerTest {
     @Autowired
     private PlatformTransactionManager transactionManager;
 
+    @Autowired
+    private com.aequivault.infrastructure.security.JwtService jwtService;
+
     private TransactionTemplate transactionTemplate;
 
     private UUID tenantId;
     private UUID tenantIdB;
     private UUID rootGroupId;
+
+    private String getTenantAToken() {
+        return jwtService.generateToken("user@tenantA.com", tenantId, java.util.Collections.emptySet());
+    }
+
+    private String getTenantBToken() {
+        return jwtService.generateToken("user@tenantB.com", tenantIdB, java.util.Collections.emptySet());
+    }
 
     @BeforeEach
     void setUp() {
@@ -109,7 +120,7 @@ class AccountGroupControllerTest {
 
         // 1. Create child group under root group
         mockMvc.perform(post("/api/v1/ledger/groups")
-                        .header("X-Tenant-ID", tenantId.toString())
+                        .header("Authorization", "Bearer " + getTenantAToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createChildPayload))
                 .andExpect(status().isCreated())
@@ -119,7 +130,7 @@ class AccountGroupControllerTest {
 
         // 2. List all groups for tenant A - should return root and child in order
         mockMvc.perform(get("/api/v1/ledger/groups")
-                        .header("X-Tenant-ID", tenantId.toString()))
+                        .header("Authorization", "Bearer " + getTenantAToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].path").value("1"))
@@ -139,7 +150,7 @@ class AccountGroupControllerTest {
 
         // 2. Try to delete root group - should fail with 422 because of child group
         mockMvc.perform(delete("/api/v1/ledger/groups/" + rootGroupId)
-                        .header("X-Tenant-ID", tenantId.toString()))
+                        .header("Authorization", "Bearer " + getTenantAToken()))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.title").value("Violación de Regla de Negocio Contable"))
                 .andExpect(jsonPath("$.detail").value("Cannot delete account group because it has sub-groups."));
@@ -158,7 +169,7 @@ class AccountGroupControllerTest {
 
         // 2. Try to delete root group - should fail with 422 because of account
         mockMvc.perform(delete("/api/v1/ledger/groups/" + rootGroupId)
-                        .header("X-Tenant-ID", tenantId.toString()))
+                        .header("Authorization", "Bearer " + getTenantAToken()))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.title").value("Violación de Regla de Negocio Contable"))
                 .andExpect(jsonPath("$.detail").value("Cannot delete account group because it has ledger accounts assigned."));
@@ -168,13 +179,13 @@ class AccountGroupControllerTest {
     void shouldEnforceRLSOnGroups() throws Exception {
         // Tenant B lists groups - should be empty because RLS isolates tenant A's root group
         mockMvc.perform(get("/api/v1/ledger/groups")
-                        .header("X-Tenant-ID", tenantIdB.toString()))
+                        .header("Authorization", "Bearer " + getTenantBToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
 
         // Tenant B tries to delete Tenant A's group - should fail with 422 (IllegalStateException) / 400 (IllegalArgumentException) "not found"
         mockMvc.perform(delete("/api/v1/ledger/groups/" + rootGroupId)
-                        .header("X-Tenant-ID", tenantIdB.toString()))
+                        .header("Authorization", "Bearer " + getTenantBToken()))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.title").value("Violación de Regla de Negocio Contable"))
                 .andExpect(jsonPath("$.detail").value("Account group not found with ID: " + rootGroupId));

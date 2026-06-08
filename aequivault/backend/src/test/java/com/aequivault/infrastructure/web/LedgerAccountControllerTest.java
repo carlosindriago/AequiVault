@@ -40,10 +40,17 @@ class LedgerAccountControllerTest {
     @Autowired
     private PlatformTransactionManager transactionManager;
 
+    @Autowired
+    private com.aequivault.infrastructure.security.JwtService jwtService;
+
     private TransactionTemplate transactionTemplate;
 
     private UUID tenantId;
     private UUID groupId;
+
+    private String getTenantToken() {
+        return jwtService.generateToken("user@test.com", tenantId, java.util.Collections.emptySet());
+    }
 
     @BeforeEach
     void setUp() {
@@ -91,7 +98,7 @@ class LedgerAccountControllerTest {
 
         // 1. Create account
         mockMvc.perform(post("/api/v1/ledger/accounts")
-                        .header("X-Tenant-ID", tenantId.toString())
+                        .header("Authorization", "Bearer " + getTenantToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createPayload))
                 .andExpect(status().isCreated())
@@ -101,7 +108,7 @@ class LedgerAccountControllerTest {
 
         // 2. List accounts
         mockMvc.perform(get("/api/v1/ledger/accounts")
-                        .header("X-Tenant-ID", tenantId.toString()))
+                        .header("Authorization", "Bearer " + getTenantToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].name").value("Caja Principal"));
@@ -119,7 +126,7 @@ class LedgerAccountControllerTest {
                 """.formatted(groupId);
 
         mockMvc.perform(post("/api/v1/ledger/accounts")
-                        .header("X-Tenant-ID", tenantId.toString())
+                        .header("Authorization", "Bearer " + getTenantToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidPayload))
                 .andExpect(status().isBadRequest())
@@ -141,11 +148,12 @@ class LedgerAccountControllerTest {
                 """.formatted(groupId);
 
         mockMvc.perform(post("/api/v1/ledger/accounts")
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("test"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.title").value("Violación de Regla de Negocio Contable"))
                 .andExpect(jsonPath("$.status").value(422))
-                .andExpect(jsonPath("$.detail").value("Tenant context is missing. Please provide X-Tenant-ID header."));
+                .andExpect(jsonPath("$.detail").value("Tenant context is missing. Unauthenticated request."));
     }
 }

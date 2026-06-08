@@ -26,7 +26,7 @@ public class LedgerAccountController {
     public ResponseEntity<LedgerAccountDto> createAccount(@Valid @RequestBody LedgerAccountDto dto) {
         String tenantStr = TenantContext.getTenantId();
         if (tenantStr == null || tenantStr.isBlank()) {
-            throw new IllegalStateException("Tenant context is missing. Please provide X-Tenant-ID header.");
+            throw new IllegalStateException("Tenant context is missing. Unauthenticated request.");
         }
         UUID tenantId = UUID.fromString(tenantStr);
         UUID accountId = dto.id() != null ? dto.id() : UUID.randomUUID();
@@ -57,7 +57,7 @@ public class LedgerAccountController {
     public ResponseEntity<List<LedgerAccountDto>> getAllAccounts() {
         String tenantStr = TenantContext.getTenantId();
         if (tenantStr == null || tenantStr.isBlank()) {
-            throw new IllegalStateException("Tenant context is missing. Please provide X-Tenant-ID header.");
+            throw new IllegalStateException("Tenant context is missing. Unauthenticated request.");
         }
 
         List<LedgerAccountDto> response = ledgerAccountRepository.findAll().stream()

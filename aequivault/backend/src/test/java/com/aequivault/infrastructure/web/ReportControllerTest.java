@@ -50,10 +50,17 @@ class ReportControllerTest {
     @Autowired
     private PlatformTransactionManager transactionManager;
 
+    @Autowired
+    private com.aequivault.infrastructure.security.JwtService jwtService;
+
     private TransactionTemplate transactionTemplate;
 
     private UUID tenantAId;
     private UUID tenantBId;
+
+    private String getTenantAToken() {
+        return jwtService.generateToken("user@tenantA.com", tenantAId, java.util.Collections.emptySet());
+    }
 
     private UUID groupAId;
     private UUID groupBId;
@@ -168,7 +175,7 @@ class ReportControllerTest {
 
         // 3. Ejecutar consulta HTTP para el reporte del Tenant A
         mockMvc.perform(get("/api/v1/reports/trial-balance")
-                        .header("X-Tenant-ID", tenantAId.toString())
+                        .header("Authorization", "Bearer " + getTenantAToken())
                         .param("startDate", queryStart.toString())
                         .param("endDate", queryEnd.toString()))
                 .andExpect(status().isOk())

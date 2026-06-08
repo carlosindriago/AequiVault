@@ -33,7 +33,7 @@ public class DashboardController {
     ) {
         String tenantStr = TenantContext.getTenantId();
         if (tenantStr == null || tenantStr.isBlank()) {
-            throw new IllegalStateException("Tenant context is missing. Please provide X-Tenant-ID header.");
+            throw new IllegalStateException("Tenant context is missing. Unauthenticated request.");
         }
         UUID tenantId = UUID.fromString(tenantStr);
 
