@@ -56,12 +56,13 @@ export class AuthService {
     localStorage.setItem(TOKEN_KEY, response.token);
     localStorage.setItem(EMAIL_KEY, response.credentials.email);
     localStorage.setItem(TENANT_KEY, response.tenantId);
-    localStorage.setItem(DEMO_EXPIRES_KEY, response.expiresAt);
+    const expiresAtUtc = response.expiresAt.endsWith('Z') ? response.expiresAt : response.expiresAt + 'Z';
+    localStorage.setItem(DEMO_EXPIRES_KEY, expiresAtUtc);
     localStorage.setItem(DEMO_FLAG_KEY, 'true');
     this.isAuthenticated.set(true);
     this.currentUser.set({ email: response.credentials.email, tenantId: response.tenantId });
     this.isDemoSession.set(true);
-    this.demoExpiresAt.set(response.expiresAt);
+    this.demoExpiresAt.set(expiresAtUtc);
   }
 
   logout(): void {
@@ -97,7 +98,10 @@ export class AuthService {
       this.isAuthenticated.set(true);
       this.currentUser.set({ email, tenantId });
       const demoFlag = localStorage.getItem(DEMO_FLAG_KEY) === 'true';
-      const expiresAt = localStorage.getItem(DEMO_EXPIRES_KEY);
+      let expiresAt = localStorage.getItem(DEMO_EXPIRES_KEY);
+      if (expiresAt && !expiresAt.endsWith('Z')) {
+        expiresAt += 'Z';
+      }
       this.isDemoSession.set(demoFlag);
       this.demoExpiresAt.set(expiresAt);
     }
