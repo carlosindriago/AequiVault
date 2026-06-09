@@ -1,103 +1,93 @@
 # Contributing to AequiVault
 
-First off, thank you for taking the time to contribute! Contributions make the open-source community an amazing place to learn, inspire, and create.
+## Branch Strategy
 
-To maintain AequiVault as a highly respected, production-ready, and enterprise-grade ledger engine, we enforce strict architectural, technical, and development workflows. Please review these guidelines before making any pull requests.
+```
+main         ← Production (Coolify auto-deploys on every push)
+develop      ← Integration branch (CI runs full test suite here)
+feat/<slug>  ← Feature branches (always created from develop)
+fix/<slug>   ← Bug fixes (from develop, or from main for hotfixes)
+```
 
----
+### Rules
 
-## Code of Conduct
-
-By participating in this project, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md). Please report any unacceptable behavior to the project maintainers.
-
----
-
-## Architectural Principles (Non-Negotiable)
-
-AequiVault is designed with the highest standards of software engineering. Every contribution must respect these boundaries:
-
-### 1. Domain Purity & Hexagonal Architecture
-* **Pure Domain Models**: Domain classes (e.g., `JournalEntry`, `Money`, `LedgerAccount`) must be **100% pure Java**. No Hibernate/JPA annotations (`@Entity`, `@Table`), no Spring Annotations (`@Component`, `@Service`), and no framework bindings.
-* **Infrastructure Isolation**: Framework and database dependencies live strictly in the Infrastructure layer. We use **MapStruct** for mapping between pure domain objects and JPA database entities at the repository boundary.
-* **Logic-Query Separation (CQRS)**: 
-  * *Write Path*: Strictly passes through the domain models, validating all accounting rules and business invariants before persistence.
-  * *Read/Report Path*: Direct projection to DTOs is allowed to skip domain overhead and optimize CPU and memory footprint on Postgres.
-
-### 2. Double-Entry Invariance & Precision
-* **No Floats/Doubles**: Floating-point numbers are strictly forbidden for currency representation. You must use the `Money` Value Object (built on `BigDecimal`).
-* **Banker's Rounding**: Values saved in the database use `DECIMAL(25,4)` with `HALF_EVEN` rounding (Banker's Rounding) to prevent cumulative rounding discrepancies.
-* **Zero Difference Rule**: Posted entries must fulfill:
-  $$\sum \text{Debits} = \sum \text{Credits}$$
-  If a posted entry is off by even a single cent, the domain must reject the transaction immediately.
-
-### 3. Multi-Tenant Row-Level Security (RLS)
-* **Physical Database Partitioning**: Tenant separation is enforced physically in PostgreSQL using **Row-Level Security (RLS)** policies. 
-* **Connection Lifecycle**: The application injects the active tenant context using `SET LOCAL app.current_tenant = :tenantId` at the transaction start.
-* **Thread Safety**: The `ThreadLocal` context storing the tenant ID must be cleaned up in a `finally` block to prevent thread poisoning and data leakage across pooled connections (HikariCP).
-
-### 4. Frontend Smart/Dumb Pattern (Angular 18)
-* **Reactive Signals**: Use Angular Signals for UI state management. Do not clutter presentational components with RxJS streams unless handling HTTP requests.
-* **Immutable Updates**: State mutations on arrays must be immutable (e.g., `this.lines.update(curr => [...curr, newLine])`). Never mutate the array directly, or the Signal chain will not trigger.
-* **Smart/Dumb Decoupling**: 
-  * *Smart Components*: Handle API orchestration, tenant context switching, and error handling.
-  * *Dumb Components*: Rely strictly on `@Input` and `@Output` (or signal inputs and outputs) for UI representation, keeping them 100% reusable and testable.
+- Every **feature** starts from `develop`:
+  ```bash
+  git checkout develop && git pull origin develop
+  git checkout -b feat/my-feature
+  ```
+- **PR to `develop`**: CI must be green (all unit + integration tests pass).
+- **PR from `develop` to `main`**: marks sprint closure; requires manual review and green CI.
+- **Hotfix in production**: branch `fix/<slug>` from `main`, PR directly to `main`, then cherry-pick to `develop`.
+- **Never push directly** to `main` or `develop`. Always use pull requests.
 
 ---
 
-## Development Workflow
+## Commit Convention (Conventional Commits)
 
-### Prerequisites
-* **Java**: JDK 21 (LTS)
-* **Node.js**: v20+
-* **Docker**: For running PostgreSQL database container
-* **Angular CLI**: v18+
+Format: `type(scope): short description in present tense`
 
-### Step-by-Step Contribution Setup
-1. **Fork** the repository and clone it locally.
-2. Spin up the test database:
-   ```bash
-   docker compose up -d
-   ```
-3. Verify the Backend test suite passes:
-   ```bash
-   cd aequivault/backend
-   ./mvnw test
-   ```
-4. Verify the Frontend test suite passes:
-   ```bash
-   cd aequivault/frontend
-   npm install
-   npm test -- --watch=false --browsers=ChromeHeadless
-   ```
-5. Create a descriptive feature branch:
-   ```bash
-   git checkout -b feat/your-awesome-feature
-   ```
+### Types
+| Type | When to use |
+|------|-------------|
+| `feat` | New feature or endpoint |
+| `fix` | Bug fix |
+| `refactor` | Code restructuring without behavior change |
+| `test` | Adding or updating tests |
+| `docs` | Documentation only changes |
+| `chore` | Build, CI, dependencies, tooling |
 
-### Coding Guidelines & TDD
-* We practice **Strict Test-Driven Development (TDD)** for domain logic. Write your unit tests *before* writing the implementation.
-* Write unit tests for new Angular components and mock HTTP services using Jasmine spies.
+### Scopes
+`backend` · `frontend` · `db` · `security` · `demo` · `ci` · `docker`
 
-### Commit Guidelines
-We follow the **Conventional Commits** specification. Commits should be structured as follows:
-* `feat: add balance sheet reporting endpoint`
-* `fix: prevent rounding errors in money subtraction`
-* `docs: update deployment guidelines`
-* `test: add unit test for container tenant switching`
-* `refactor: clean up MapStruct mapper configuration`
+### Examples
+```
+feat(backend): add paginated journal entry list endpoint
+fix(frontend): append Z to expiresAt to force UTC parsing
+test(backend): add integration tests for draft publish flow
+refactor(backend): extract EntryNumberService from JournalEntryService
+docs: add CONTRIBUTING.md with git workflow
+chore(ci): add integration test stage to backend workflow
+```
 
-> [!WARNING]
-> **No AI Attribution**: Do not include "Co-Authored-By: AI", "Generated by AI", or similar attributions in commit messages. Keep commit logs professional and human-focused.
+### Atomic Commit Rule
+**One commit = one conceptual change.**
+If your commit message needs "and" to describe itself, split it into two commits.
 
 ---
 
-## Pull Request Process
+## Sprint Closure Checklist
 
-1. Ensure all backend (`./mvnw test`) and frontend tests (`npm test`) pass successfully.
-2. Update the documentation if you changed any API contracts, environment variables, or database schemas.
-3. Open a Pull Request against the `main` branch. 
-4. Provide a detailed summary of the PR:
-   * **What**: What changes were made.
-   * **Why**: Why these changes are necessary.
-   * **How**: The architectural approach selected.
-   * **Verification**: Evidence of test execution and logs.
+A sprint is closed when:
+- [ ] All `feat/*` branch commits are merged into `develop`
+- [ ] CI is green on `develop` (unit + integration tests)
+- [ ] PR from `develop → main` was reviewed and approved
+- [ ] Feature was manually verified in production (Coolify)
+- [ ] `CHANGELOG.md` was updated with sprint changes
+
+---
+
+## Local Development
+
+### Backend
+```bash
+cd aequivault/backend
+docker compose -f ../../docker-compose.dev.yml up -d  # start local postgres
+./mvnw spring-boot:run
+```
+
+### Frontend
+```bash
+cd aequivault/frontend
+npm install
+npm run start
+```
+
+### Run Tests
+```bash
+# Backend
+./mvnw test
+
+# Frontend
+npm run test -- --watch=false --browsers=ChromeHeadless
+```
