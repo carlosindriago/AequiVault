@@ -3,13 +3,18 @@ package com.aequivault.infrastructure.web;
 import com.aequivault.domain.model.*;
 import com.aequivault.domain.repository.JournalEntryRepository;
 import com.aequivault.infrastructure.security.TenantContext;
+import com.aequivault.infrastructure.web.dto.JournalEntryFilter;
 import com.aequivault.infrastructure.web.dto.JournalEntryRequest;
 import com.aequivault.infrastructure.web.dto.JournalEntryResponse;
 import com.aequivault.infrastructure.web.dto.JournalLineResponse;
+import com.aequivault.infrastructure.web.dto.PagedResponse;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.*;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.time.LocalDate;
 import java.util.Currency;
 import java.util.List;
 import java.util.UUID;
@@ -100,6 +105,35 @@ public class JournalEntryController {
 
         // 7. Retornar la respuesta mapeada
         return ResponseEntity.status(HttpStatus.CREATED).body(mapToResponse(entry, resolvedCurrency));
+    }
+
+    @GetMapping
+    public ResponseEntity<PagedResponse<JournalEntryResponse>> listEntries(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "date") String sort,
+            @RequestParam(defaultValue = "desc") String direction) {
+
+        Sort.Direction dir = "asc".equalsIgnoreCase(direction) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, Math.min(size, 100), Sort.by(dir, sort));
+        JournalEntryFilter filter = new JournalEntryFilter(status, from, to, q);
+
+        Page<JournalEntry> result = journalEntryRepository.findAll(filter, pageable);
+
+        List<JournalEntryResponse> items = result.getContent().stream()
+                .map(e -> {
+                    String currency = e.getLines().isEmpty() ? "USD" : e.getLines().get(0).amount().currency().getCurrencyCode();
+                    return mapToResponse(e, currency);
+                })
+                .toList();
+
+        return ResponseEntity.ok(new PagedResponse<>(
+                items, result.getNumber(), result.getSize(),
+                result.getTotalElements(), result.getTotalPages()));
     }
 
     @GetMapping("/{id}")
