@@ -79,11 +79,13 @@ describe('JournalEntryStateService', () => {
     const debitLineId = lines[0].id;
     const creditLineId = lines[1].id;
 
-    // 1. Assign accounts to lines for DRAFT state
+    // 1. Assign accounts and amounts to lines for DRAFT state (amount is mandatory in DB)
     service.updateLine(debitLineId, 'ledgerAccountId', 'acc-1');
+    service.updateLine(debitLineId, 'amount', 100);
     service.updateLine(creditLineId, 'ledgerAccountId', 'acc-2');
+    service.updateLine(creditLineId, 'amount', 200);
 
-    // In DRAFT status, once accounts are assigned, canSubmit should be true (amount is not mandatory for draft)
+    // In DRAFT status, once accounts and amounts are assigned, canSubmit should be true
     service.status.set('DRAFT');
     expect(service.canSubmit()).toBeTrue();
 
