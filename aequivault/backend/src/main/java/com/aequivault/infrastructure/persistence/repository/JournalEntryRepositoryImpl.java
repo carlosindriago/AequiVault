@@ -6,8 +6,15 @@ import com.aequivault.domain.repository.JournalEntryRepository;
 import com.aequivault.infrastructure.persistence.entity.DraftJournalEntryEntity;
 import com.aequivault.infrastructure.persistence.entity.JournalEntryEntity;
 import com.aequivault.infrastructure.persistence.mapper.JournalEntryMapper;
+import com.aequivault.infrastructure.web.dto.JournalEntryFilter;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -65,5 +72,30 @@ public class JournalEntryRepositoryImpl implements JournalEntryRepository {
         }
         // Si no está, buscar en borradores (drafts)
         return draftRepository.findById(id).map(mapper::toDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<JournalEntry> findAll(JournalEntryFilter filter, Pageable pageable) {
+        boolean wantPosted = filter.status() == null || "POSTED".equalsIgnoreCase(filter.status());
+        boolean wantDraft  = filter.status() == null || "DRAFT".equalsIgnoreCase(filter.status());
+
+        List<JournalEntry> combined = new ArrayList<>();
+
+        if (wantPosted) {
+            postedRepository.findWithFilters(filter.from(), filter.to(), filter.query(), Pageable.unpaged())
+                    .forEach(e -> combined.add(mapper.toDomain(e)));
+        }
+        if (wantDraft) {
+            draftRepository.findWithFilters(filter.from(), filter.to(), filter.query(), Pageable.unpaged())
+                    .forEach(e -> combined.add(mapper.toDomain(e)));
+        }
+
+        combined.sort(Comparator.comparing(JournalEntry::getDate).reversed());
+
+        int start = (int) pageable.getOffset();
+        int end   = Math.min(start + pageable.getPageSize(), combined.size());
+        List<JournalEntry> page = start > combined.size() ? List.of() : combined.subList(start, end);
+        return new PageImpl<>(page, pageable, combined.size());
     }
 }
