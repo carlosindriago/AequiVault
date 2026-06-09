@@ -14,8 +14,10 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       SPRING_LIQUIBASE_USER: ${SPRING_LIQUIBASE_USER}
       SPRING_LIQUIBASE_PASSWORD: ${SPRING_LIQUIBASE_PASSWORD}
+      DEMO_EPHEMERAL_ENABLED: ${DEMO_EPHEMERAL_ENABLED:-true}
     networks:
       - app-network
+      - coolify
     restart: always
 
   frontend:
@@ -34,3 +36,5 @@ services:
 networks:
   app-network:
     driver: bridge
+  coolify:
+    external: true
