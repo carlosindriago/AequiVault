@@ -32,3 +32,11 @@ export interface JournalEntryResponse {
   currency: string;
   lines: JournalLineResponse[];
 }
+
+export interface PagedJournalResponse {
+  content: JournalEntryResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
