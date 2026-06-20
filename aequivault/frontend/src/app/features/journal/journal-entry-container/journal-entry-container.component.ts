@@ -12,6 +12,7 @@ import { JournalEntryRequest } from '../../../core/models/journal-entry.model';
 import { JournalLineTableComponent } from '../components/journal-line-table/journal-line-table.component';
 import { JournalEntrySummaryComponent } from '../components/journal-entry-summary/journal-entry-summary.component';
 import { JournalEntryFormComponent } from '../components/journal-entry-form/journal-entry-form.component';
+import { JournalListComponent } from '../components/journal-list/journal-list.component';
 import { CoaManagerComponent } from '../coa-manager/coa-manager.component';
 import { ReportContainerComponent } from '../report-container/report-container.component';
 import { DashboardContainerComponent } from '../dashboard-container/dashboard-container.component';
@@ -29,6 +30,7 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
     JournalLineTableComponent,
     JournalEntrySummaryComponent,
     JournalEntryFormComponent,
+    JournalListComponent,
     CoaManagerComponent,
     ReportContainerComponent,
     DashboardContainerComponent,
@@ -71,7 +73,23 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
             </svg>
             {{ t('sidebar.dashboard') }}
           </button>
-          
+
+          <button 
+            type="button" 
+            class="menu-btn" 
+            [class.active]="activeTab() === 'journal-list'"
+            (click)="activeTab.set('journal-list')">
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <line x1="3" y1="6" x2="3.01" y2="6"></line>
+              <line x1="3" y1="12" x2="3.01" y2="12"></line>
+              <line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
+            Asientos
+          </button>
+
           <button 
             type="button" 
             class="menu-btn" 
@@ -145,6 +163,8 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
             <h2 class="page-title">
               @if (activeTab() === 'entry') {
                 {{ t('header.new_entry') }}
+              } @else if (activeTab() === 'journal-list') {
+                Libro de Asientos
               } @else if (activeTab() === 'ledger') {
                 {{ t('sidebar.ledger') }}
               } @else if (activeTab() === 'coa') {
@@ -412,6 +432,16 @@ import { TranslocoDirective, TranslocoPipe, TranslocoService } from '@jsverse/tr
               <app-dashboard-container 
                 [tenantId]="activeTenantId()">
               </app-dashboard-container>
+            </div>
+          }
+
+          @if (activeTab() === 'journal-list') {
+            <div class="journal-list-workspace animate-workspace">
+              <app-journal-list
+                (editDraft)="onEditDraftFromList($event)"
+                (publishDraft)="onPublishDraftFromList($event)"
+                (viewEntry)="onViewEntryFromList($event)">
+              </app-journal-list>
             </div>
           }
 
@@ -1138,7 +1168,7 @@ export class JournalEntryContainerComponent implements OnInit, OnDestroy {
   activeTenantId = signal<string>(this.authService.currentUser()?.tenantId || '');
   accounts = signal<LedgerAccountDto[]>([]);
   isLoading = signal<boolean>(false);
-  activeTab = signal<'dashboard' | 'ledger' | 'entry' | 'coa' | 'reports' | 'settings'>('dashboard');
+  activeTab = signal<'dashboard' | 'ledger' | 'entry' | 'coa' | 'reports' | 'settings' | 'journal-list'>('dashboard');
   isProfileMenuOpen = signal<boolean>(false);
   isNotificationMenuOpen = signal<boolean>(false);
 
@@ -1300,6 +1330,28 @@ export class JournalEntryContainerComponent implements OnInit, OnDestroy {
     this.translationState.setLanguage(lang);
   }
 
+  onEditDraftFromList(entry: any): void {
+    // Load draft data into the form and navigate to the entry tab
+    this.activeTab.set('entry');
+  }
+
+  onPublishDraftFromList(entry: any): void {
+    if (confirm(`¿Publicar el asiento${entry.entryNumber ? ' ' + entry.entryNumber : ''}? Esta acción es irreversible.`)) {
+      this.journalService.publishDraft(entry.id).subscribe({
+        next: () => {
+          this.notification.set({ type: 'success', title: 'Asiento publicado', detail: 'El asiento fue publicado exitosamente en el libro diario.' });
+        },
+        error: (e: any) => {
+          this.showErrorNotification('Error al publicar', e?.error?.message || 'Error interno del servidor.');
+        }
+      });
+    }
+  }
+
+  onViewEntryFromList(entry: any): void {
+    this.activeTab.set('entry');
+  }
+
   fetchAccounts() {
     this.isLoading.set(true);
     this.accountService.getAccounts(this.activeTenantId()).subscribe({
@@ -1326,7 +1378,7 @@ export class JournalEntryContainerComponent implements OnInit, OnDestroy {
     // Mapear líneas locales al contrato de backend
     const payloadLines = this.state.lines().map(l => ({
       ledgerAccountId: l.ledgerAccountId,
-      amount: l.amount || 0,
+      amount: l.amount!,
       type: l.type
     }));
 

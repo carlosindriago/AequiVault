@@ -9,6 +9,10 @@ export const routes: Routes = [
     canActivate: [setupGuard]
   },
   {
+    path: 'demo/loading',
+    loadComponent: () => import('./features/auth/demo-loading/demo-loading.component').then(m => m.DemoLoadingComponent)
+  },
+  {
     path: 'login',
     loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent),
     canActivate: [setupGuard, authGuard]
